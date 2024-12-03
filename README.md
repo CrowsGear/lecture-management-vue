@@ -1,0 +1,2 @@
+# lecture-management-vue
+vue
