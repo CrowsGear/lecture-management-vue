@@ -12,3 +12,13 @@
 ```bash
 yarn install
 ```
+
+## 개발서버 구동
+```bash
+# yarn이 설치되어 있는 경우
+yarn dev:docker
+```
+```bash
+# yarn이 설치되어 있지 않은 경우(쉘 스크립트 직접 실행)
+. ./script/start.dev.sh
+```
