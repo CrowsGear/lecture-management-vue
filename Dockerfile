@@ -1,5 +1,5 @@
 # Build
-FROM node:18.20.5 as build-stage
+FROM node:18.20.5 AS build-stage
 
 # Workdirectory 설정
 WORKDIR /app
@@ -20,7 +20,7 @@ RUN yarn build
 
 # Production(nginx)
 # nginx를 통해 빌드된 파일을 제공
-FROM nginx:1.21.3 as production-stage
+FROM nginx:1.21.3 AS production-stage
 
 # yarn build를 통해 빌드된 정적 파일을 nginx의 html 디렉토리로 복사
 COPY --from=build-stage /app/dist /usr/share/nginx/html
