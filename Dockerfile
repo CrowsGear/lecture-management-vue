@@ -25,6 +25,9 @@ FROM nginx:1.21.3 AS production-stage
 # yarn build를 통해 빌드된 정적 파일을 nginx의 html 디렉토리로 복사
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 
+# nginx 설정 파일을 복사
+COPY --from=build-stage /app/nginx.conf /etc/nginx/conf.d/default.conf
+
 # 80포트 오픈 및 nginx 실행
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
