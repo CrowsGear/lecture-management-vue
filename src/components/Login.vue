@@ -10,6 +10,12 @@ const login = () => {
   console.log(loginForm);
 };
 
+const test = () => {
+  fetch("http://13.125.125.231:3030/api/v1/schools")
+    .then((res) => res.json())
+    .then((res) => console.log(res));
+};
+
 </script>
 
 <template>
@@ -23,6 +29,7 @@ const login = () => {
     </div>
     <div>
       <button @click="login">로그인</button>
+      <button @click="test">API 요청 TEST</button>
     </div>
   </div>
 </template>
