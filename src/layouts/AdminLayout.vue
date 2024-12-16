@@ -25,6 +25,11 @@
             성적 관리
           </RouterLink>
         </li>
+        <li>
+          <RouterLink to="/admin/banners" class="menu-item" active-class="active">
+            배너 관리
+          </RouterLink>
+        </li>
       </ul>
     </nav>
 
@@ -39,12 +44,13 @@
 .admin-layout {
   display: flex;
   min-height: 100vh;
+  background-color: var(--content-bg);
 }
 
 .admin-sidebar {
   width: 240px;
-  background-color: #2c3e50;
-  color: white;
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-text);
   padding: 20px 0;
 }
 
@@ -67,23 +73,26 @@
 .menu-item {
   display: block;
   padding: 15px 20px;
-  color: #ffffff;
+  color: var(--sidebar-text);
   text-decoration: none;
   transition: background-color 0.3s;
 }
 
 .menu-item:hover {
-  background-color: #34495e;
+  background-color: var(--sidebar-hover);
 }
 
 .menu-item.active {
-  background-color: #3498db;
+  background-color: var(--sidebar-active);
   font-weight: bold;
 }
 
 .admin-content {
   flex: 1;
   padding: 20px;
-  background-color: #f5f7fa;
+  background-color: var(--content-bg);
+  color: var(--text-color);
+  min-width: 900px;
+  box-sizing: border-box;
 }
 </style>

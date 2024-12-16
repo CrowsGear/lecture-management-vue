@@ -1,6 +1,5 @@
 import { RouteRecordRaw } from 'vue-router';
 import AdminLayout from "../../layouts/AdminLayout.vue";
-import SchoolManagement from "../../views/admin/school/SchoolManagement.vue";
 
 const adminRoutes: RouteRecordRaw[] = [
     {
@@ -9,18 +8,23 @@ const adminRoutes: RouteRecordRaw[] = [
         children: [
             {
                 path: "schools",
-                name: "SchoolManagement",
-                component: SchoolManagement,
+                name: "SchoolManagement", 
+                component: () => import("../../views/admin/school/SchoolManagement.vue"),
             },
             {
-                path: "students",
+                path: "students", 
                 name: "StudentManagement",
-                component: SchoolManagement,
+                component: () => import("../../views/admin/school/StudentManagement.vue"),
             },
             {
                 path: "grades",
-                name: "GradeManagement",
-                component: SchoolManagement,
+                name: "GradeManagement", 
+                component: () => import("../../views/admin/school/GradeManagement.vue"),
+            },
+            {
+                path: "banners",
+                name: "BannerManagement",
+                component: () => import("../../views/admin/BannerManagement.vue"),
             }
         ],
     }
