@@ -1,71 +1,109 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref } from 'vue';
+import { useAuthStore } from '../stores/auth';
 import { useRouter } from "vue-router";
 import type { ILoginForm } from '../types/login';
-import { login } from '../api/auth';
+
+const PHONE_REGEX = /^\d{8}$/;
+const PASSWORD_REGEX = /^\d{5}$/;
 
 const router = useRouter();
-const isLoading = ref<boolean>(false);
-const PHONE_REGEX = /^\d{8}$/;
+const authStore = useAuthStore();
 
-/* 폼 데이터 */
-const form = reactive<ILoginForm>({
+const form = ref<ILoginForm>({
   phone: '',
   password: ''
 });
 
-/* 에러 메시지 */
-const errors = reactive({
+const errors = ref({
   phone: '',
   password: ''
 });
 
-/* 폼 유효성 검사 */
-const validateForm = (): boolean => {
-  let isValid = true;
-  errors.phone = '';
-  errors.password = '';
-
-  if (!form.phone) {
-    errors.phone = 'ID를 입력해주세요.';
-    isValid = false;
-  } else if (!PHONE_REGEX.test(form.phone)) {
-    errors.phone = '휴대폰 번호 뒤 8자리를 입력해주세요.';
-    isValid = false;
+// 전화번호 유효성 검사
+const validatePhone = (value: string) => {
+  if (!value) {
+    errors.value.phone = '';
+    return false;
   }
-
-  if (!form.password) {
-    errors.password = '비밀번호를 입력해주세요.';
-    isValid = false;
+  if (!PHONE_REGEX.test(value)) {
+    errors.value.phone = '휴대폰 번호 뒤 8자리를 입력해주세요.';
+    return false;
   }
+  errors.value.phone = '';
+  return true;
+};
 
-  return isValid;
+// 비밀번호 유효성 검사
+const validatePassword = (value: string) => {
+  if (!value) {
+    errors.value.password = '';
+    return false;
+  }
+  if (!PASSWORD_REGEX.test(value)) {
+    errors.value.password = '비밀번호는 5자리 숫자여야 합니다.';
+    return false;
+  }
+  errors.value.password = '';
+  return true;
 };
 
 const handleLogin = async (): Promise<void> => {
-  if (!validateForm()) return;
+  // 최종 유효성 검사
+  const isPhoneValid = validatePhone(form.value.phone);
+  const isPasswordValid = validatePassword(form.value.password);
+  
+  if (!isPhoneValid || !isPasswordValid) return;
 
   try {
-    isLoading.value = true;
+    // 010 추가하여 로그인 요청
+    const loginData = {
+      phone: `010${form.value.phone}`,
+      password: form.value.password
+    };
 
-    // 실제 API 호출 로직으로 대체 필요
-    const response = await login(form);
-
-    if (response.success) {
-      // 토큰 저장
-      localStorage.setItem('token', response.token || '');
-      // 홈 페이지로 리다이렉트
-      router.push('/');
-    } else {
-      alert(response.message);
-    }
+    await authStore.login(loginData);
+    router.push('/');
   } catch (error) {
-    console.error('Login error:', error);
-    alert('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
-  } finally {
-    isLoading.value = false;
+    console.error('Login failed:', error);
   }
 };
+
+// CSS 변수 정의
+const colors = {
+  light: {
+    '--text-color': '#000000',
+    '--bg-color': '#ffffff',
+    '--border-color': '#000000',
+    '--error-color': '#ff0000',
+    '--button-bg': '#000000',
+    '--button-text': '#ffffff',
+    '--button-disabled': '#666666',
+    '--divider-color': '#000000'
+  },
+  dark: {
+    '--text-color': '#ffffff',
+    '--bg-color': '#1a1a1a',
+    '--border-color': '#ffffff',
+    '--error-color': '#ff6b6b',
+    '--button-bg': '#ffffff',
+    '--button-text': '#000000',
+    '--button-disabled': '#999999',
+    '--divider-color': '#ffffff'
+  }
+};
+
+// 시스템 다크 모드 감지 및 CSS 변수 적용
+if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  Object.entries(colors.dark).forEach(([key, value]) => {
+    document.documentElement.style.setProperty(key, value);
+  });
+} else {
+  Object.entries(colors.light).forEach(([key, value]) => {
+    document.documentElement.style.setProperty(key, value);
+  });
+}
+
 </script>
 
 <template>
@@ -83,22 +121,36 @@ const handleLogin = async (): Promise<void> => {
         <div class="input-section">
           <!-- ID 입력 -->
           <div class="input-row">
-            <label for="userId">ID</label>
-            <input
-                type="text"
-                id="userId"
-                v-model="form.phone"
-            />
+            <div class="input-container">
+              <label for="userId">ID</label>
+              <input
+                  type="text"
+                  id="userId"
+                  v-model="form.phone"
+                  @input="validatePhone(form.phone)"
+                  maxlength="8"
+              />
+            </div>
+            <div class="error-message" v-if="errors.phone">
+              {{ errors.phone }}
+            </div>
           </div>
 
           <!-- PW 입력 -->
           <div class="input-row">
-            <label for="password">P.W</label>
-            <input
-                type="password"
-                id="password"
-                v-model="form.password"
-            />
+            <div class="input-container">
+              <label for="password">P.W</label>
+              <input
+                  type="password"
+                  id="password"
+                  v-model="form.password"
+                  @input="validatePassword(form.password)"
+                  maxlength="5"
+              />
+            </div>
+            <div class="error-message" v-if="errors.password">
+              {{ errors.password }}
+            </div>
           </div>
         </div>
 
@@ -106,7 +158,6 @@ const handleLogin = async (): Promise<void> => {
         <button
             class="enter-btn"
             @click="handleLogin"
-            :disabled="isLoading"
         >
           Enter
         </button>
@@ -140,15 +191,17 @@ const handleLogin = async (): Promise<void> => {
 <style scoped>
 .login-container {
   width: 100%;
-  max-width: 600px;
+  max-width: 37.5rem;
   margin: 0 auto;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
 }
 
 .banner {
   width: 100%;
-  margin: 20px 0;
-  min-height: 200px;
+  margin: 1.25rem 0;
+  min-height: 12.5rem;
 }
 
 .banner img {
@@ -158,18 +211,18 @@ const handleLogin = async (): Promise<void> => {
 }
 
 .form-divider {
-  height: 2px;
-  background-color: #000;
-  margin: 30px 0;
+  height: 0.125rem;
+  background-color: var(--divider-color);
+  margin: 1.875rem 0;
 }
 
 .login-form {
-  padding: 0 20px;
+  padding: 0 1.25rem;
 }
 
 .form-content {
   display: flex;
-  gap: 15px;
+  gap: 1rem;
 }
 
 .input-section {
@@ -177,66 +230,89 @@ const handleLogin = async (): Promise<void> => {
 }
 
 .input-row {
+  position: relative;
   display: flex;
-  align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 1rem;
 }
 
-.input-row:last-child {
-  margin-bottom: 0;
+.input-container {
+  display: flex;
+  width: 100%;
+  align-items: center;
 }
 
 .input-row label {
-  width: 45px;
-  font-size: 16px;
+  width: 2.8rem;
+  font-size: 1rem;
   font-weight: bold;
-  margin-right: 10px;
+  margin-right: 0.625rem;
 }
 
 input {
   flex: 1;
-  height: 40px;
-  border: 1px solid #000;
-  padding: 0 10px;
-  font-size: 16px;
+  height: 2.5rem;
+  border: 1px solid var(--border-color);
+  padding: 0 0.625rem;
+  font-size: 1rem;
   outline: none;
+  background-color: var(--bg-color);
+  color: var(--text-color);
 }
 
 .enter-btn {
-  width: 120px;
-  height: 95px; /* ID와 PW 입력창 높이 + 간격 */
-  background: #000;
-  color: #fff;
+  width: 7.5rem;
+  height: 6.25rem;
+  background: var(--button-bg);
+  color: var(--button-text);
   border: none;
-  font-size: 16px;
+  font-size: 1rem;
   cursor: pointer;
   font-weight: normal;
+  border-radius: 0.625rem;
+  margin-top: -0.125rem;
 }
 
 .enter-btn:disabled {
-  background: #666;
+  background: var(--button-disabled);
 }
 
 .login-help {
-  margin-top: 30px;
+  margin-top: 1.875rem;
 }
 
 .help-section {
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
 }
 
 .help-section h3 {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: bold;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
   text-align: left;
+  color: var(--text-color);
 }
 
 .help-section p {
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.5;
   margin: 0;
-  color: #000;
+  color: var(--text-color);
   text-align: left;
+}
+
+.error-message {
+  position: absolute;
+  bottom: -0.9375rem;
+  left: 3.4375rem;
+  color: var(--error-color);
+  font-size: 0.625rem;
+  line-height: 1;
+}
+
+/* 다크 모드 미디어 쿼리 */
+@media (prefers-color-scheme: dark) {
+  input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+  }
 }
 </style>

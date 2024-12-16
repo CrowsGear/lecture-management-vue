@@ -1,11 +1,20 @@
 <script setup lang="ts">
+/* Third Party */
 import { ref, onMounted } from 'vue'
+
+/* Components */
 import SearchForm from '../../../components/admin/SearchForm.vue'
 import DataTable from '../../../components/admin/DataTable.vue'
-import type { ISchoolSearchParams, ISchool } from '../../../types/school'
-import type { ITableInfo } from "../../../types/tableInfo.ts";
-import { fetchSchools } from '../../../api/school'
 
+/* Types */
+import type { ISchoolSearchParams, ISchool } from '../../../types/school'
+import type { ISearchConfig } from '../../../types/common/common';
+import type { ITableInfo } from "../../../types/common/common.ts";
+
+/* APIs */
+import { fetchSchools } from '../../../api/school';
+
+/* 검색 파라미터 for SearchForm.vue */
 const searchParams = ref<ISchoolSearchParams>({
   schoolName: "",
   period: {
@@ -14,7 +23,34 @@ const searchParams = ref<ISchoolSearchParams>({
   }
 })
 
+/* 검색 옵션 for SearchForm.vue */
+const searchConfig: ISearchConfig = {
+  fields: [
+    {
+      name: 'schoolName',
+      label: '학교명',
+      type: 'text',
+      placeholder: '학교명을 입력하세요'
+    },
+    {
+      name: 'period',
+      label: '등록기간',
+      type: 'period'
+    }
+  ],
+  periods: [
+    { label: '오늘', value: 'today' },
+    { label: '1주일', value: 'week' },
+    { label: '1개월', value: 'month' },
+    { label: '3개월', value: '3months' },
+    { label: '6개월', value: '6months' }
+  ]
+}
+
+/* 학교 데이터 for DataTable.vue */
 const schoolData = ref<ISchool[]>([])
+
+/* 테이블 정보 for DataTable.vue */
 const schoolTableInfo = ref<ITableInfo>({
   tableName: "school",
   tableComment: "학교",
@@ -23,13 +59,18 @@ const schoolTableInfo = ref<ITableInfo>({
     { name: 'schoolName', comment: '학교명' },
     { name: 'createdAt', comment: '등록일자' }
   ]
-})
+  });
+
+/* 로딩 상태 */
 const loading = ref<boolean>(false)
+
+/* 페이지 정보 */
 const totalCount = ref<number>(0)
 const currentPage = ref<number>(1)
 const perPage = ref<number>(50)
 const totalPages = ref<number>(1)
 
+/* 검색 함수 for SearchForm.vue */
 const handleSearch = async () => {
 
   loading.value = true;
@@ -46,11 +87,13 @@ const handleSearch = async () => {
   }
 }
 
+/* 업데이트 함수 for DataTable.vue */
 const handleUpdate = async (id: number, data: Partial<ISchool>) => {
   // 업데이트 로직 구현
   console.log(id, data);
 }
 
+/* 이전 페이지 함수 */
 const handlePrevPage = () => {
   if (currentPage.value > 1) {
     currentPage.value--
@@ -58,6 +101,7 @@ const handlePrevPage = () => {
   }
 }
 
+/* 다음 페이지 함수 */
 const handleNextPage = () => {
   if (currentPage.value < totalPages.value) {
     currentPage.value++
@@ -65,6 +109,7 @@ const handleNextPage = () => {
   }
 }
 
+/* 컴포넌트 마운트 시 검색 함수 실행 */
 onMounted(() => {
   handleSearch()
 })
@@ -72,10 +117,13 @@ onMounted(() => {
 
 <template>
   <div class="school-management">
+    <h2>학교 관리</h2>
     <SearchForm
+        :config="searchConfig"
         v-model:searchParams="searchParams"
         @search="handleSearch"
     />
+    <div class="section-divider"></div>
     <div class="data-controls">
       <div class="total-count">
         총 {{ totalCount }}건
@@ -104,6 +152,16 @@ onMounted(() => {
 <style scoped>
 .school-management {
   padding: 20px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.section-divider {
+  height: 1px;
+  background-color: var(--divider-color);
+  margin: 2rem 0;
+  width: 100%;
 }
 
 .data-controls {
@@ -111,6 +169,12 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin: 20px 0;
+  width: 100%;
+}
+
+.data-table {
+  width: 100%;
+  overflow-x: auto;
 }
 
 .pagination-controls {
@@ -118,5 +182,6 @@ onMounted(() => {
   justify-content: center;
   gap: 10px;
   margin-top: 20px;
+  width: 100%;
 }
 </style>
