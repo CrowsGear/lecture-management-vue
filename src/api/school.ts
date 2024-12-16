@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from "../utils/axios";
 import type { ISchoolSearchParams, ISchool } from "../types/school.ts";
 
 const API_URL = "http://13.125.125.231:3030/api/v1";
