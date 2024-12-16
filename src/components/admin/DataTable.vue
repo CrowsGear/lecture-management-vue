@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import Checkbox from '../common/Checkbox.vue'
 import type { ISchool } from '../../types/school'
-import type { ITableInfo } from "../../types/tableInfo.ts";
+import type { ITableInfo } from "../../types/common/common.ts";
 
 const props = defineProps<{
   data: ISchool[];
