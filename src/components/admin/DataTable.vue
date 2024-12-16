@@ -5,13 +5,13 @@ import type { ISchool } from '../../types/school'
 import type { ITableInfo } from "../../types/common/common.ts";
 
 const props = defineProps<{
-  data: ISchool[];
+  data: any[];
   tableInfo: ITableInfo;
   loading?: boolean;
 }>()
 
 const emit = defineEmits<{
-  (e: 'update', id: number, data: Partial<ISchool>): void;
+  (e: 'update', id: number, data: any): void;
   (e: 'select', items: string[]): void;
 }>()
 

@@ -14,7 +14,7 @@ import type { IStudentUploadData, IStudent, ILecture, IStudentForm, IStudentSear
 import type { ITableInfo } from "../../../types/common/common";
 
 /* APIs */
-import { fetchStudents, createStudent, updateStudent, deleteStudent } from '../../../api/student';
+import { fetchStudents, createStudent, updateStudent } from '../../../api/student';
 
 /* 검색 파라미터 for SearchForm.vue */
 const searchParams = ref<IStudentSearchParams>({
@@ -250,26 +250,12 @@ const handleEditStudent = async () => {
   }
 };
 
-/* 학생 삭제 */
-const handleDeleteStudent = async (studentId: string) => {
-  if (!confirm('정말 삭제하시겠습니까?')) return;
-  
-  try {
-    const response = await deleteStudent(studentId);
-    if (response.success) {
-      alert('학생이 삭제되었습니다.');
-      await fetchStudents();
-    }
-  } catch (error) {
-    console.error('학생 삭제 실패:', error);
-    alert('학생 삭제에 실패했습니다.');
-  }
-};
+
 
 /* 학생 수정 시작 */
-const startEdit = (student: IStudent) => {
+const startEdit = (id: number, student: IStudent) => {
   isEditing.value = true;
-  editingId.value = student.studentCode;
+  editingId.value = id.toString();
   Object.assign(studentForm, {
     studentName: student.studentName,
     studentCode: student.studentCode,
