@@ -1,13 +1,31 @@
 export interface IGradeImage {
   fileName: string;
-  url: string;
+  rawDateTime: string;
+  gradeImageUrl: string;
   studentCode: string;
-  examDate: string;
-  subjectCode: string;
-  score?: number;
+  examDateTime: string;
+  lectureCode: string;
 }
 
 export interface IPreSignedUrl {
-  url: string;
-  fields: Record<string, string>;
+  signedUrl: string;
+}
+
+export interface IGradePreview extends IGradeImage {
+  previewUrl: string;
+}
+
+export interface IGradeUploadParams {
+  lecture: {
+    lectureCode: string;
+    student: {
+      studentCode: string;
+      grade: {
+        gradeImageUrl: string;
+      };
+    };
+    lectureSession: {
+      sessionDate: string;
+    };
+  };
 } 

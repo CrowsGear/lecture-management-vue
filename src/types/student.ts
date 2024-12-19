@@ -1,7 +1,5 @@
 export interface IParent {
-  parentName: string;
   parentPhone: string;
-  password: string;
 }
 
 export interface ISchool {
@@ -12,7 +10,8 @@ export interface IStudent {
   studentName: string;
   studentPhone: string;
   studentCode: string;
-  password: string;
+  studentGrade: number;
+  isAttend: number;
   parents: IParent[];
   school: ISchool;
 }
@@ -20,7 +19,7 @@ export interface IStudent {
 export interface ILecture {
   lectureCode: string;
   lectureStartDate: string;
-  lectureEndDate: string;
+  lectureEndDate?: string;
   students: IStudent[];
 }
 
