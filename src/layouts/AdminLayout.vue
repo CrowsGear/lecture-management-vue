@@ -16,6 +16,11 @@
           </RouterLink>
         </li>
         <li>
+          <RouterLink to="/admin/lectures" class="menu-item" active-class="active">
+            강의 관리
+          </RouterLink>
+        </li>
+        <li>
           <RouterLink to="/admin/students" class="menu-item" active-class="active">
             학생 관리
           </RouterLink>
