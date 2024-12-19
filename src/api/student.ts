@@ -1,5 +1,5 @@
 import axios from '../utils/axios';
-import type { IStudent } from '../types/student';
+import type { IStudent, IStudentUploadData } from '../types/student';
 
 interface IStudentResponse {
   data: IStudent[];
@@ -46,3 +46,13 @@ export const deleteStudent = async (id: string): Promise<IStudentResponse> => {
     throw error;
   }
 }; 
+
+export const uploadStudents = async (studentData: IStudentUploadData): Promise<IStudentResponse> => {
+  try {
+    const response = await axios.post('/common/uploads', studentData);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to upload students:', error);
+    throw error;
+  }
+};
