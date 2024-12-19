@@ -8,11 +8,18 @@ const props = defineProps<{
   data: any[];
   tableInfo: ITableInfo;
   loading?: boolean;
+  totalCount?: number;
+  currentPage?: number;
+  perPage?: number;
+  perPageOptions?: number[];
 }>()
 
 const emit = defineEmits<{
   (e: 'update', id: number, data: any): void;
+  (e: 'delete', id: number): void;
   (e: 'select', items: string[]): void;
+  (e: 'update:currentPage', page: number): void;
+  (e: 'update:perPage', count: number): void;
 }>()
 
 const selectedItems = ref<string[]>([])
@@ -36,10 +43,42 @@ const handleEdit = (item: ISchool) => {
   emit('update', item.id, item)
 }
 
+const handleDelete = (item: ISchool) => {
+  if (confirm('정말 삭제하시겠습니까?')) {
+    emit('delete', item.id)
+  }
+}
+
+const totalPages = computed(() => {
+  if (!props.totalCount || !props.perPage) return 1;
+  return Math.ceil(props.totalCount / props.perPage);
+});
+
 </script>
 
 <template>
   <div class="data-table-wrapper">
+    <div class="table-controls">
+      <div class="total-count">
+        총 {{ totalCount || data.length }}건
+      </div>
+      <div class="per-page-control">
+        <select 
+          v-if="perPageOptions"
+          :value="perPage"
+          @change="emit('update:perPage', Number(($event.target as HTMLSelectElement).value))"
+        >
+          <option 
+            v-for="option in perPageOptions" 
+            :key="option" 
+            :value="option"
+          >
+            {{ option }}개씩 보기
+          </option>
+        </select>
+      </div>
+    </div>
+
     <table class="data-table">
       <thead>
       <tr>
@@ -77,16 +116,40 @@ const handleEdit = (item: ISchool) => {
           {{ item[field.name] }}
         </td>
         <td>
-          <button
-              class="action-button"
+          <div class="action-buttons">
+            <button
+              class="action-button edit"
               @click="handleEdit(item)"
-          >
-            수정
-          </button>
+            >
+              수정
+            </button>
+            <button
+              class="action-button delete"
+              @click="handleDelete(item)"
+            >
+              삭제
+            </button>
+          </div>
         </td>
       </tr>
       </tbody>
     </table>
+
+    <div v-if="totalPages > 1" class="pagination">
+      <button 
+        :disabled="currentPage === 1"
+        @click="emit('update:currentPage', (currentPage || 1) - 1)"
+      >
+        이전
+      </button>
+      <span>{{ currentPage }} / {{ totalPages }}</span>
+      <button 
+        :disabled="currentPage === totalPages"
+        @click="emit('update:currentPage', (currentPage || 1) + 1)"
+      >
+        다음
+      </button>
+    </div>
   </div>
 </template>
 
@@ -142,6 +205,11 @@ const handleEdit = (item: ISchool) => {
   color: #c62828;
 }
 
+.action-buttons {
+  display: flex;
+  gap: 4px;
+}
+
 .action-button {
   padding: 4px 8px;
   border: 1px solid #ddd;
@@ -152,5 +220,62 @@ const handleEdit = (item: ISchool) => {
 
 .action-button:hover {
   background: #f5f5f5;
+}
+
+.action-button.edit:hover {
+  background: #e3f2fd;
+  border-color: #2196f3;
+  color: #1976d2;
+}
+
+.action-button.delete {
+  border-color: #ffcdd2;
+}
+
+.action-button.delete:hover {
+  background: #ffebee;
+  border-color: #ef5350;
+  color: #d32f2f;
+}
+
+.table-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.total-count {
+  color: var(--text-color);
+}
+
+.per-page-control select {
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.pagination button {
+  padding: 4px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>
