@@ -9,17 +9,22 @@ const adminRoutes: RouteRecordRaw[] = [
             {
                 path: "schools",
                 name: "SchoolManagement", 
-                component: () => import("../../views/admin/school/SchoolManagement.vue"),
+                component: () => import("../../views/admin/SchoolManagement.vue"),
+            },
+            {
+                path: "lectures",
+                name: "LectureManagement",
+                component: () => import("../../views/admin/LectureManagement.vue"),
             },
             {
                 path: "students", 
                 name: "StudentManagement",
-                component: () => import("../../views/admin/school/StudentManagement.vue"),
+                component: () => import("../../views/admin/StudentManagement.vue"),
             },
             {
                 path: "grades",
                 name: "GradeManagement", 
-                component: () => import("../../views/admin/school/GradeManagement.vue"),
+                component: () => import("../../views/admin/GradeManagement.vue"),
             },
             {
                 path: "banners",
