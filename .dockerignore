@@ -1,0 +1,19 @@
+# Dependencies
+node_modules
+
+# Build
+dist
+
+# Version Control
+.git
+.gitignore
+
+# IDE and Editor
+.idea
+.vscode
+.DS_Store
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
