@@ -4,17 +4,19 @@ import { ref, reactive, onMounted, computed } from 'vue';
 import * as XLSX from 'xlsx';
 
 /* Components */
-import SearchForm from '../../../components/admin/SearchForm.vue';
-import DataTable from '../../../components/admin/DataTable.vue';
-import ReadOnlyTable from '../../../components/common/ReadOnlyTable.vue';
+import SearchForm from '../../components/admin/SearchForm.vue';
+import DataTable from '../../components/admin/DataTable.vue';
+import ReadOnlyTable from '../../components/common/ReadOnlyTable.vue';
+import FormModal from '../../components/common/FormModal.vue';
 
 /* Types */
-import type { ISearchConfig } from '../../../types/common/common';
-import type { IStudentUploadData, IStudent, ILecture, IStudentForm, IStudentSearchParams} from '../../../types/student';
-import type { ITableInfo } from "../../../types/common/common";
+import type { ISearchConfig } from '../../types/common/common';
+import type { IFormConfig } from '../../types/common/form';
+import type { IStudentUploadData, IStudent, ILecture, IStudentForm, IStudentSearchParams} from '../../types/student';
+import type { ITableInfo } from "../../types/common/common";
 
 /* APIs */
-import { fetchStudents, createStudent, updateStudent } from '../../../api/student';
+import { fetchStudents, createStudent, updateStudent, uploadStudents } from '../../api/student';
 
 /* 검색 파라미터 for SearchForm.vue */
 const searchParams = ref<IStudentSearchParams>({
@@ -44,10 +46,14 @@ const searchConfig: ISearchConfig = {
   ]
 };
 
-/* 파일 업로드 관련 */
-const fileInput = ref<HTMLInputElement | null>(null);
-const parsedData = ref<IStudentUploadData>({ lectures: [] });
-const isLoading = ref(false);
+/* 폼 설정 for FormModal.vue */
+const formConfig: IFormConfig = {
+  title: '학생 추가',
+  fields: [
+    { name: 'studentName', label: '이름', type: 'text', required: true },
+    { name: 'studentCode', label: '학생 코드', type: 'text', required: true },
+  ]
+};
 
 /* 학생 목록 관련 */
 const students = ref<IStudent[]>([]);
@@ -64,6 +70,12 @@ const studentForm = reactive<IStudentForm>({
 const isEditing = ref(false);
 const editingId = ref<string | null>(null);
 const showForm = ref(false);
+
+/* 파일 업로드 관련 */
+const fileInput = ref<HTMLInputElement | null>(null);
+const parsedData = ref<IStudentUploadData>({ lectures: [] });
+const isLoading = ref(false);
+
 
 /* 테이블 정보 for DataTable.vue */
 const studentTableInfo = ref<ITableInfo>({
@@ -91,6 +103,33 @@ const handleSearch = async () => {
   }
 };
 
+/* 폼 제출 처리 */
+const handleFormSubmit = async (formData: Record<string, any>) => {
+  try {
+    if (isEditing.value && editingId.value) {
+      const response = await updateStudent(editingId.value, formData);
+      if (response.success) {
+        alert("학생 정보가 수정되었습니다.");
+        showForm.value = false;
+        await handleSearch();
+      }
+    } else {
+      const response = await createStudent({
+        ...formData,
+        password: formData.studentPhone.slice(-4)
+      });
+      if (response.success) {
+        alert("학생이 추가되었습니다.");
+        showForm.value = false;
+        await handleSearch();
+      }
+    }
+  } catch (error) {
+    console.error("학생 추가/수정 실패:", error);
+    alert("학생 추가/수정에 실패했습니다.");
+  }
+}
+
 /* 파일 업로드 event handler */
 const handleFileUpload = async (event: Event) => {
   const target = event.target as HTMLInputElement;
@@ -115,10 +154,13 @@ const readExcelFile = (file: File): Promise<any[][]> => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
+
+        const STUDENT_SHEET_NAME = "인적사항";
+
         const data = e.target?.result;
         const workbook = XLSX.read(data, { type: 'binary' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
+        // const sheetName = workbook.SheetNames.find(name => name.includes(STUDENT_SHEET_NAME));
+        const worksheet = workbook.Sheets[STUDENT_SHEET_NAME];
         
         // 수식의 계산된 결과값을 가져오도록 옵션 설정
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
@@ -141,50 +183,78 @@ const readExcelFile = (file: File): Promise<any[][]> => {
 /* 엑셀 데이터 처리 */
 const processExcelData = (data: any[][]) => {
   // 헤더 행 제거
-  const rows = data.slice(1);
+  try {
+    const lectureRows = data.slice(5, 7);
+    let lectureCode = lectureRows[0][2];
+    let rawlectureStartDate = lectureRows[1][2];
+    const [year, month, day] = rawlectureStartDate.split('_');
+    const lectureStartDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    const lectureEndDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+   
+    const studentRows = data.slice(9);
+    
+    const lectureMap = new Map<string, ILecture>();
   
-  const lectureMap = new Map<string, ILecture>();
-
-  rows.forEach((row) => {
-    const [
-      _no, studentCode, _type, studentName, schoolName,
-      studentPhone, parentPhone
-    ] = row;
-
-    // 기본 비밀번호 생성 (실제 구현시 보안을 고려해야 함)
-    const password = studentPhone.slice(-4);
-
-    const student: IStudent = {
-      studentName,
-      studentPhone,
-      studentCode,
-      password,
-      parents: [{
-        parentName: studentName,
-        parentPhone,
-        password
-      }],
-      school: {
-        schoolName
+    for (const row of studentRows) {
+      const [
+        _emptyCell, 
+        _no, 
+        _unusedCode, 
+        rawIsAttend, // 재원
+        studentName, // 이름
+        _unusedschool, // 학교(미사용)
+        rawStudentPhone,
+        rawParentPhone, // 보호자 연락처
+        studentCode, // 학생 코드 (31x + 1007031218)(ex. ST311007031218)
+        rawSchoolCode, // 학교 코드 (ex. 서울_1)
+      ] = row;
+  
+      if (!studentName) continue;
+      const studentPhone = rawStudentPhone.replace(/[-()]/g, '');
+      const parentPhone = rawParentPhone.replace(/[-()]/g, '');
+      const isAttend = Number(rawIsAttend);
+      if (![1, 2].includes(isAttend)) {
+        throw new Error(`${studentName}: ${studentCode} 재원 값이 올바르지 않습니다. ${rawIsAttend}`);
       }
-    };
-
-    if (!lectureMap.has(studentCode)) {
-      lectureMap.set(studentCode, {
-        lectureCode: studentCode,
-        lectureStartDate: "2024-12-15", // 실제 데이터에 맞게 수정 필요
-        lectureEndDate: "2024-12-16",   // 실제 데이터에 맞게 수정 필요
-        students: []
-      });
+  
+      /* 학교 정보 추출 */
+      const schoolName = rawSchoolCode.split('_')[0];
+      const studentGrade = parseInt(rawSchoolCode.split('_')[1]);
+  
+      /* 학생 정보 추출 */
+      const student: IStudent = {
+        studentName,
+        studentPhone,
+        studentCode,
+        studentGrade,
+        isAttend,
+        parents: [{
+          parentPhone,
+        }],
+        school: {
+          schoolName
+        }
+      };
+  
+      if (!lectureMap.has(lectureCode)) {
+        lectureMap.set(lectureCode, {
+          lectureCode: lectureCode,
+          lectureStartDate,
+          lectureEndDate,
+          students: []
+        });
+      }
+  
+      if (student.studentCode) lectureMap.get(lectureCode)?.students.push(student);
     }
-
-    lectureMap.get(studentCode)?.students.push(student);
-    console.log(lectureMap.get(studentCode));
-  });
-
-  parsedData.value = {
-    lectures: Array.from(lectureMap.values())
-  };
+  
+    parsedData.value = {
+      lectures: Array.from(lectureMap.values())
+    };
+  } catch(err) {
+    console.error(err);
+    alert((err as Error).message);
+  }
 };
 
 /* 엑셀 업로드 event handler */
@@ -192,8 +262,10 @@ const handleUpload = async () => {
   try {
     isLoading.value = true;
     // API 호출 로직 구현 필요
-    console.log('업로드할 데이터:', parsedData.value);
+    const response = await uploadStudents(parsedData.value);
+    console.log(response);
     alert('데이터가 성공적으로 업로드되었습니다.');
+    await handleSearch();
   } catch (error) {
     console.error('업로드 중 오류 발생:', error);
     alert('데이터 업로드 중 오류가 발생했습니다.');
@@ -211,47 +283,6 @@ const resetForm = () => {
   editingId.value = null;
 };
 
-/* 학생 추가 */
-const handleAddStudent = async () => {
-  try {
-    const response = await createStudent({
-      ...studentForm,
-      password: studentForm.studentPhone.slice(-4)
-    });
-
-    if (response.success) {
-      alert('학생이 추가되었습니다.');
-      resetForm();
-      showForm.value = false;
-      await fetchStudents();
-    }
-    
-  } catch (error) {
-    console.error('학생 추가 실패:', error);
-    alert('학생 추가에 실패했습니다.');
-  }
-};
-
-/* 학생 수정 */
-const handleEditStudent = async () => {
-  if (!editingId.value) return;
-  
-  try {
-    const response = await updateStudent(editingId.value, studentForm);
-    if (response.success) {
-      alert('학생 정보가 수정되었습니다.');
-      resetForm();
-      showForm.value = false;
-      await fetchStudents();
-    }
-  } catch (error) {
-    console.error('학생 수정 실패:', error);
-    alert('학생 정보 수정에 실패했습니다.');
-  }
-};
-
-
-
 /* 학생 수정 시작 */
 const startEdit = (id: number, student: IStudent) => {
   isEditing.value = true;
@@ -260,7 +291,6 @@ const startEdit = (id: number, student: IStudent) => {
     studentName: student.studentName,
     studentCode: student.studentCode,
     studentPhone: student.studentPhone,
-    parentName: student.parents[0].parentName,
     parentPhone: student.parents[0].parentPhone,
     schoolName: student.school.schoolName
   });
@@ -276,9 +306,12 @@ onMounted(() => {
 const previewHeaders = [
   { key: 'lectureCode', label: '강의 코드' },
   { key: 'studentName', label: '이름' },
+  { key: 'isAttend', label: '재원' },
   { key: 'schoolName', label: '학교' },
+  { key: 'studentGrade', label: '학년'},
   { key: 'studentPhone', label: '학생 연락처' },
-  { key: 'parentPhone', label: '보호자 연락처' }
+  { key: 'parentPhone', label: '보호자 연락처' },
+  { key: 'studentCode', label: '학생 코드' },
 ];
 
 /* 미리보기 테이블 데이터 변환 */
@@ -289,7 +322,10 @@ const previewItems = computed(() => {
       studentName: student.studentName,
       schoolName: student.school.schoolName,
       studentPhone: student.studentPhone,
-      parentPhone: student.parents[0].parentPhone
+      parentPhone: student.parents[0].parentPhone,
+      studentCode: student.studentCode,
+      isAttend: student.isAttend,
+      studentGrade: student.studentGrade,
     }))
   );
 });
@@ -319,41 +355,6 @@ const previewItems = computed(() => {
         </button>
       </div>
 
-      <!-- 학생 추가/수정 폼 -->
-      <div v-if="showForm" class="student-form">
-        <h3>{{ isEditing ? '학생 정보 수정' : '새 학생 추가' }}</h3>
-        <form @submit.prevent="isEditing ? handleEditStudent() : handleAddStudent()">
-          <div class="form-group">
-            <label>이름</label>
-            <input v-model="studentForm.studentName" required />
-          </div>
-          <div class="form-group">
-            <label>학생 코드</label>
-            <input v-model="studentForm.studentCode" required :disabled="isEditing" />
-          </div>
-          <div class="form-group">
-            <label>학생 연락처</label>
-            <input v-model="studentForm.studentPhone" required />
-          </div>
-          <div class="form-group">
-            <label>보호자 이름</label>
-            <input v-model="studentForm.parentName" required />
-          </div>
-          <div class="form-group">
-            <label>보호자 연락처</label>
-            <input v-model="studentForm.parentPhone" required />
-          </div>
-          <div class="form-group">
-            <label>학교</label>
-            <input v-model="studentForm.schoolName" required />
-          </div>
-          <div class="form-actions">
-            <button type="submit">{{ isEditing ? '수정' : '추가' }}</button>
-            <button type="button" @click="showForm = false">취소</button>
-          </div>
-        </form>
-      </div>
-
       <!-- 데이터 테이블 -->
       <DataTable
         :data="students"
@@ -372,7 +373,7 @@ const previewItems = computed(() => {
           <input
             ref="fileInput"
             type="file"
-            accept=".xlsx, .xls"
+            accept=".xlsx, .xls, .xlsm"
             @change="handleFileUpload"
             :disabled="isLoading"
           />
@@ -392,10 +393,20 @@ const previewItems = computed(() => {
       v-if="parsedData.lectures.length"
       :headers="previewHeaders"
       :items="previewItems"
-      keyField="studentPhone"
+      keyField="studentCode"
     >
       <template #title>업로드 데이터 미리보기</template>
     </ReadOnlyTable>
+
+    <!-- 폼 모달 -->
+    <FormModal
+      :show="showForm"
+      :config="formConfig"
+      :initialData="studentForm"
+      :isEdit="isEditing"
+      @update:show="showForm = $event"
+      @submit="handleFormSubmit"
+    />
   </div>
 </template>
 

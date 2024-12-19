@@ -3,16 +3,16 @@
 import { ref, onMounted } from 'vue'
 
 /* Components */
-import SearchForm from '../../../components/admin/SearchForm.vue'
-import DataTable from '../../../components/admin/DataTable.vue'
+import SearchForm from '../../components/admin/SearchForm.vue'
+import DataTable from '../../components/admin/DataTable.vue'
 
 /* Types */
-import type { ISchoolSearchParams, ISchool } from '../../../types/school'
-import type { ISearchConfig } from '../../../types/common/common';
-import type { ITableInfo } from "../../../types/common/common.ts";
+import type { ISchoolSearchParams, ISchool } from '../../types/school.ts'
+import type { ISearchConfig } from '../../types/common/common.ts';
+import type { ITableInfo } from "../../types/common/common.ts";
 
 /* APIs */
-import { fetchSchools } from '../../../api/school';
+import { fetchSchools, deleteSchool } from '../../api/school.ts';
 
 /* 검색 파라미터 for SearchForm.vue */
 const searchParams = ref<ISchoolSearchParams>({
@@ -77,13 +77,14 @@ const handleSearch = async () => {
 
   try {
     const result = await fetchSchools(searchParams.value);
-    schoolData.value = result.data
-    totalCount.value = schoolData.value.length
-    totalPages.value = Math.ceil(totalCount.value / perPage.value)
+    console.log(result);
+    schoolData.value = result.data;
+    totalCount.value = schoolData.value.length;
+    totalPages.value = Math.ceil(totalCount.value / perPage.value);
   } catch (error) {
     console.error('Failed to fetch schools:', error)
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
@@ -93,21 +94,35 @@ const handleUpdate = async (id: number, data: Partial<ISchool>) => {
   console.log(id, data);
 }
 
-/* 이전 페이지 함수 */
-const handlePrevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-    handleSearch()
+/* 삭제 함수 for DataTable.vue */
+const handleDelete = async (id: number) => {
+  try {
+    loading.value = true;
+    const response = await deleteSchool(id);
+    if (response.code === "SC-04") {
+      alert('삭제되었습니다.');
+      await handleSearch();
+    }
+  } catch (error) {
+    console.error('Failed to delete school:', error);
+    alert('삭제 중 오류가 발생했습니다.');
+  } finally {
+    loading.value = false;
   }
-}
+};
 
-/* 다음 페이지 함수 */
-const handleNextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-    handleSearch()
-  }
-}
+/* 페이지 변경 핸들러 */
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+  handleSearch();
+};
+
+/* 페이지당 항목 수 변경 핸들러 */
+const handlePerPageChange = (count: number) => {
+  perPage.value = count;
+  currentPage.value = 1; // 페이지 수 변경시 첫 페이지로
+  handleSearch();
+};
 
 /* 컴포넌트 마운트 시 검색 함수 실행 */
 onMounted(() => {
@@ -124,28 +139,19 @@ onMounted(() => {
         @search="handleSearch"
     />
     <div class="section-divider"></div>
-    <div class="data-controls">
-      <div class="total-count">
-        총 {{ totalCount }}건
-      </div>
-      <div class="per-page">
-        <select v-model="perPage">
-          <option value="50">50개씩 보기</option>
-          <option value="100">100개씩 보기</option>
-        </select>
-      </div>
-    </div>
     <DataTable
         :data="schoolData"
         :table-info="schoolTableInfo"
         :loading="loading"
+        :total-count="totalCount"
+        :current-page="currentPage"
+        :per-page="perPage"
+        :per-page-options="[50, 100]"
         @update="handleUpdate"
+        @delete="handleDelete"
+        @update:current-page="handlePageChange"
+        @update:per-page="handlePerPageChange"
     />
-    <div class="pagination-controls">
-      <button @click="handlePrevPage">이전</button>
-      <span>{{ currentPage }} / {{ totalPages }}</span>
-      <button @click="handleNextPage">다음</button>
-    </div>
   </div>
 </template>
 
@@ -161,27 +167,6 @@ onMounted(() => {
   height: 1px;
   background-color: var(--divider-color);
   margin: 2rem 0;
-  width: 100%;
-}
-
-.data-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 20px 0;
-  width: 100%;
-}
-
-.data-table {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.pagination-controls {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 20px;
   width: 100%;
 }
 </style>
