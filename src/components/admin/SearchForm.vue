@@ -60,6 +60,16 @@ const emitSearch = () => {
   emit('update:searchParams', localParams.value)
   emit('search')
 }
+
+/**
+ * Enter 키 입력 핸들러
+ * @param event - 키보드 이벤트
+ */
+const handleKeyPress = (event: KeyboardEvent) => {
+  if (event.key === 'Enter') {
+    emit('search');
+  }
+};
 </script>
 
 <template>
@@ -76,6 +86,7 @@ const emitSearch = () => {
         v-if="field.type === 'text'"
         v-model="localParams[field.name]"
         :placeholder="field.placeholder"
+        @keypress="handleKeyPress"
       >
       
       <!-- 날짜 선택 -->
