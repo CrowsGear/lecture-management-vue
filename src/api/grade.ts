@@ -109,7 +109,7 @@ const createGrade = async (params: IGradeUploadParams): Promise<IResponse> => {
 /**
  * 성적 목록 조회
  */
-export const fetchGrades = async (params: any): Promise<IResponse> => {
+export const fetchGrades = async (params?: any): Promise<IResponse> => {
   const response = await axios.get('/grades', { params });
   return response.data;
 };
