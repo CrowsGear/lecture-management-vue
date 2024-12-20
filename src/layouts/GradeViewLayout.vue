@@ -98,7 +98,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  max-width: 1000px;
+  max-width: 600px;
   margin: 0 auto;
   background-color: var(--bg-color);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
