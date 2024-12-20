@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import adminRoutes from "./modules/admin";
 import mainRoutes from "./modules/main";
+import gradesRoutes from "./modules/grades";
 
 
 const router = createRouter({
@@ -8,6 +9,7 @@ const router = createRouter({
     routes: [
         ...mainRoutes,
         ...adminRoutes,
+        ...gradesRoutes,
     ],
 })
 
