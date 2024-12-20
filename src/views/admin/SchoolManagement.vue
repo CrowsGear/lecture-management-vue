@@ -20,7 +20,9 @@ const searchParams = ref<ISchoolSearchParams>({
   period: {
     start: "",
     end: ""
-  }
+  },
+  page: 1,
+  limit: 50
 })
 
 /* 검색 옵션 for SearchForm.vue */
@@ -47,9 +49,6 @@ const searchConfig: ISearchConfig = {
   ]
 }
 
-/* 학교 데이터 for DataTable.vue */
-const schoolData = ref<ISchool[]>([])
-
 /* 테이블 정보 for DataTable.vue */
 const schoolTableInfo = ref<ITableInfo>({
   tableName: "school",
@@ -59,16 +58,16 @@ const schoolTableInfo = ref<ITableInfo>({
     { name: 'schoolName', comment: '학교명' },
     { name: 'createdAt', comment: '등록일자' }
   ]
-  });
+});
 
-/* 로딩 상태 */
-const loading = ref<boolean>(false)
+/* 학교 데이터 for DataTable.vue */
+const schoolData = ref<ISchool[]>([]);
+const loading = ref<boolean>(false);
+const totalCount = ref<number>(0);
+const currentPage = ref<number>(1);
+const perPage = ref<number>(50);
+const totalPages = ref<number>(1);
 
-/* 페이지 정보 */
-const totalCount = ref<number>(0)
-const currentPage = ref<number>(1)
-const perPage = ref<number>(50)
-const totalPages = ref<number>(1)
 
 /* 검색 함수 for SearchForm.vue */
 const handleSearch = async () => {
@@ -77,9 +76,8 @@ const handleSearch = async () => {
 
   try {
     const result = await fetchSchools(searchParams.value);
-    console.log(result);
-    schoolData.value = result.data;
-    totalCount.value = schoolData.value.length;
+    schoolData.value = result.data.items;
+    totalCount.value = result.data.count;
     totalPages.value = Math.ceil(totalCount.value / perPage.value);
   } catch (error) {
     console.error('Failed to fetch schools:', error)

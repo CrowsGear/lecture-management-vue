@@ -240,7 +240,7 @@ const searchConfig: ISearchConfig = {
   ]
 };
 
-/* 테이블 정보 */
+/* 테이블 정보 for DataTable.vue */
 const gradeTableInfo = ref<ITableInfo>({
   tableName: 'grade',
   tableComment: '성적',
@@ -253,7 +253,7 @@ const gradeTableInfo = ref<ITableInfo>({
   ]
 });
 
-/* 목록 데이터 */
+/* 목록 데이터 for DataTable.vue */
 const gradeData = ref<IGradeImage[]>([]);
 const loading = ref(false);
 const totalCount = ref(0);

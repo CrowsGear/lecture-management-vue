@@ -25,7 +25,9 @@ const searchParams = ref<IStudentSearchParams>({
   period: {
     start: "",
     end: ""
-  }
+  },
+  page: 1,
+  limit: 50
 });
 
 /* 검색 옵션 for SearchForm.vue */
@@ -46,6 +48,7 @@ const searchConfig: ISearchConfig = {
   ]
 };
 
+
 /* 폼 설정 for FormModal.vue */
 const formConfig: IFormConfig = {
   title: '학생 추가',
@@ -55,10 +58,8 @@ const formConfig: IFormConfig = {
   ]
 };
 
-/* 학생 목록 관련 */
-const students = ref<IStudent[]>([]);
 
-/* 학생 추가/수정 폼 관련*/
+/* 학생 추가/수정 폼 관련 for FormModal.vue */
 const studentForm = reactive<IStudentForm>({
   studentName: '',
   studentCode: '',
@@ -74,7 +75,7 @@ const showForm = ref(false);
 /* 파일 업로드 관련 */
 const fileInput = ref<HTMLInputElement | null>(null);
 const parsedData = ref<IStudentUploadData>({ lectures: [] });
-const isLoading = ref(false);
+const upLoading = ref(false);
 
 
 /* 테이블 정보 for DataTable.vue */
@@ -90,16 +91,26 @@ const studentTableInfo = ref<ITableInfo>({
   ]
 });
 
+/* 학생 목록 관련 for DataTable.vue */
+const studentData = ref<IStudent[]>([]);
+const loading = ref<boolean>(false);
+const totalCount = ref<number>(0)
+const currentPage = ref<number>(1)
+const perPage = ref<number>(50)
+const totalPages = ref<number>(1)
+
 /* 검색 처리 */
 const handleSearch = async () => {
   try {
-    isLoading.value = true;
-    const response = await fetchStudents();
-    students.value = response.data;
+    loading.value = true;
+    const result = await fetchStudents(searchParams.value);
+    studentData.value = result.data.items;
+    totalCount.value = result.data.count;
+    totalPages.value = Math.ceil(totalCount.value / perPage.value);
   } catch (error) {
     console.error('Failed to fetch students:', error);
   } finally {
-    isLoading.value = false;
+    loading.value = false;
   }
 };
 
@@ -108,7 +119,8 @@ const handleFormSubmit = async (formData: Record<string, any>) => {
   try {
     if (isEditing.value && editingId.value) {
       const response = await updateStudent(editingId.value, formData);
-      if (response.success) {
+      if (response.code === "SC-04") {
+        /* TODO: 응답 코드 협상 */
         alert("학생 정보가 수정되었습니다.");
         showForm.value = false;
         await handleSearch();
@@ -118,7 +130,8 @@ const handleFormSubmit = async (formData: Record<string, any>) => {
         ...formData,
         password: formData.studentPhone.slice(-4)
       });
-      if (response.success) {
+      if (response.code === "SC-04") {
+        /* TODO: 응답 코드 협상 */
         alert("학생이 추가되었습니다.");
         showForm.value = false;
         await handleSearch();
@@ -130,13 +143,26 @@ const handleFormSubmit = async (formData: Record<string, any>) => {
   }
 }
 
+/* 페이지 변경 처리 */
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+  handleSearch();
+};
+
+/* 페이지 당 학생 수 변경 처리 */
+const handlePerPageChange = (count: number) => {
+  perPage.value = count;
+  currentPage.value = 1; // 페이지 수 변경시 첫 페이지로
+  handleSearch();
+};
+
 /* 파일 업로드 event handler */
 const handleFileUpload = async (event: Event) => {
   const target = event.target as HTMLInputElement;
   if (!target.files?.length) return;
 
   try {
-    isLoading.value = true;
+    upLoading.value = true;
     const file = target.files[0];
     const data = await readExcelFile(file);
     processExcelData(data);
@@ -144,7 +170,7 @@ const handleFileUpload = async (event: Event) => {
     console.error('파일 처리 중 오류 발생:', error);
     alert('파일 처리 중 오류가 발생했습니다.');
   } finally {
-    isLoading.value = false;
+    upLoading.value = false;
     if (fileInput.value) fileInput.value.value = '';
   }
 };
@@ -260,7 +286,7 @@ const processExcelData = (data: any[][]) => {
 /* 엑셀 업로드 event handler */
 const handleUpload = async () => {
   try {
-    isLoading.value = true;
+    upLoading.value = true;
     // API 호출 로직 구현 필요
     const response = await uploadStudents(parsedData.value);
     console.log(response);
@@ -270,7 +296,7 @@ const handleUpload = async () => {
     console.error('업로드 중 오류 발생:', error);
     alert('데이터 업로드 중 오류가 발생했습니다.');
   } finally {
-    isLoading.value = false;
+    upLoading.value = false;
   }
 };
 
@@ -357,10 +383,16 @@ const previewItems = computed(() => {
 
       <!-- 데이터 테이블 -->
       <DataTable
-        :data="students"
+        :data="studentData"
         :table-info="studentTableInfo"
-        :loading="isLoading"
+        :loading="loading"
+        :total-count="totalCount"
+        :current-page="currentPage"
+        :per-page="perPage"
+        :per-page-options="[50, 100]"
         @update="startEdit"
+        @update:current-page="handlePageChange"
+        @update:per-page="handlePerPageChange"
       />
     </div>
 
@@ -375,14 +407,14 @@ const previewItems = computed(() => {
             type="file"
             accept=".xlsx, .xls, .xlsm"
             @change="handleFileUpload"
-            :disabled="isLoading"
+            :disabled="upLoading"
           />
           <button 
             @click="handleUpload"
-            :disabled="isLoading || !parsedData.lectures.length"
+            :disabled="upLoading || !parsedData.lectures.length"
             class="upload-btn"
           >
-            {{ isLoading ? '처리중...' : '업로드' }}
+            {{ upLoading ? '처리중...' : '업로드' }}
           </button>
         </div>
       </div>
