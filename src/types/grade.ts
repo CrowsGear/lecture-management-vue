@@ -1,4 +1,5 @@
 import type { ILectureSession } from './lecture';
+import type { ISearchParams } from './common/searchParams';
 
 export interface IGradeImage {
   fileName: string;
@@ -30,6 +31,11 @@ export interface IGradeUploadParams {
       sessionDate: string;
     };
   };
+}
+
+export interface IGradeSearchParams extends ISearchParams {
+  studentName?: string;
+  schoolName?: string;
 }
 
 export interface IGradeResponse {

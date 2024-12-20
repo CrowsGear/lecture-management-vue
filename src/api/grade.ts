@@ -1,6 +1,7 @@
 import axios from '../utils/axios';
 import type { IGradeUploadParams } from '../types/grade';
 import type { IResponse } from '../types/common/response';
+import type { IGradeSearchParams } from '../types/grade';
 
 /**
  * Pre-signed URL 만료 처리
@@ -109,7 +110,7 @@ const createGrade = async (params: IGradeUploadParams): Promise<IResponse> => {
 /**
  * 성적 목록 조회
  */
-export const fetchGrades = async (params?: any): Promise<IResponse> => {
+export const fetchGrades = async (params?: IGradeSearchParams): Promise<IResponse> => {
   const response = await axios.get('/grades', { params });
   return response.data;
 };
