@@ -1,13 +1,17 @@
 <script setup lang="ts">
+/* Third Party */
 import { ref } from 'vue';
+
+/* stores */
 import { useAuthStore } from '../stores/auth';
-import { useRouter } from "vue-router";
+
+/* types */
 import type { ILoginForm } from '../types/login';
 
+/* constants */
 const PHONE_REGEX = /^\d{8}$/;
 const PASSWORD_REGEX = /^\d{5}$/;
 
-const router = useRouter();
 const authStore = useAuthStore();
 
 const form = ref<ILoginForm>({
@@ -20,7 +24,21 @@ const errors = ref({
   password: ''
 });
 
-// 전화번호 유효성 검사
+/**
+ * Enter 키 입력 핸들러
+ * @param event - 키보드 이벤트
+ */
+const handleKeyPress = (event: KeyboardEvent) => {
+  if (event.key === 'Enter') {
+    handleLogin();
+  }
+};
+
+/**
+ * 전화번호 유효성 검사
+ * @param value - 전화번호
+ * @returns - 유효성 검사 결과
+ */
 const validatePhone = (value: string) => {
   if (!value) {
     errors.value.phone = '';
@@ -34,7 +52,11 @@ const validatePhone = (value: string) => {
   return true;
 };
 
-// 비밀번호 유효성 검사
+/**
+ * 비밀번호 유효성 검사
+ * @param value - 비밀번호
+ * @returns - 유효성 검사 결과
+ */
 const validatePassword = (value: string) => {
   if (!value) {
     errors.value.password = '';
@@ -48,6 +70,9 @@ const validatePassword = (value: string) => {
   return true;
 };
 
+/**
+ * 로그인 핸들러
+ */
 const handleLogin = async (): Promise<void> => {
   // 최종 유효성 검사
   const isPhoneValid = validatePhone(form.value.phone);
@@ -63,7 +88,7 @@ const handleLogin = async (): Promise<void> => {
     };
 
     await authStore.login(loginData);
-    router.push('/');
+
   } catch (error) {
     console.error('Login failed:', error);
   }
@@ -110,7 +135,7 @@ if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
   <div class="login-container">
     <!-- 상단 배너 이미지 -->
     <div class="banner banner-top">
-      <img src="../assets/jmmath_banner_example.png" alt="상단 배너" />
+      <img src="../assets/daily_report_top.jpeg" alt="상단 배너" />
     </div>
 
     <!-- 로그인 폼 -->
@@ -128,6 +153,7 @@ if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
                   id="userId"
                   v-model="form.phone"
                   @input="validatePhone(form.phone)"
+                  @keypress="handleKeyPress"
                   maxlength="8"
               />
             </div>
@@ -145,6 +171,7 @@ if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
                   id="password"
                   v-model="form.password"
                   @input="validatePassword(form.password)"
+                  @keypress="handleKeyPress"
                   maxlength="5"
               />
             </div>
@@ -181,7 +208,7 @@ if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
 
     <!-- 하단 배너 이미지 -->
     <div class="banner banner-bottom">
-      <img src="../assets/jmmath_banner_example.png" alt="하단 배너" />
+      <img src="../assets/daily_report_bottom.jpeg" alt="하단 배너" />
     </div>
   </div>
 </template>
@@ -191,8 +218,9 @@ if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
 <style scoped>
 .login-container {
   width: 100%;
-  max-width: 37.5rem;
-  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background-color: var(--bg-color);
   color: var(--text-color);
@@ -200,29 +228,34 @@ if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
 
 .banner {
   width: 100%;
-  margin: 1.25rem 0;
-  min-height: 12.5rem;
+  height: auto;
+  flex-shrink: 0;
 }
 
 .banner img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .form-divider {
   height: 0.125rem;
   background-color: var(--divider-color);
-  margin: 1.875rem 0;
+  margin: 1rem 0;
 }
 
 .login-form {
-  padding: 0 1.25rem;
+  padding: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .form-content {
   display: flex;
   gap: 1rem;
+  margin: 1rem 0;
 }
 
 .input-section {
@@ -277,7 +310,8 @@ input {
 }
 
 .login-help {
-  margin-top: 1.875rem;
+  margin-top: auto;
+  padding-top: 1rem;
 }
 
 .help-section {
@@ -307,6 +341,53 @@ input {
   color: var(--error-color);
   font-size: 0.625rem;
   line-height: 1;
+}
+
+/* 모바일 환경 최적화 */
+@media (max-width: 768px) {
+  .banner {
+    height: auto;
+  }
+
+  .login-form {
+    padding: 0.75rem;
+  }
+
+  .form-content {
+    margin: 0.75rem 0;
+  }
+
+  .enter-btn {
+    width: 5rem;
+    height: 5.8rem;
+    font-size: 0.9rem;
+  }
+
+  .input-row label {
+    width: 2.5rem;
+    font-size: 0.9rem;
+  }
+
+  input {
+    height: 2.2rem;
+    font-size: 0.9rem;
+  }
+
+  .help-section {
+    margin-bottom: 1rem;
+  }
+
+  .help-section h3,
+  .help-section p {
+    font-size: 0.9rem;
+  }
+}
+
+/* 태블릿 환경 최적화 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .login-form {
+    padding: 1rem;
+  }
 }
 
 /* 다크 모드 미디어 쿼리 */
