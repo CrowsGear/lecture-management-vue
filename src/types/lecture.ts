@@ -1,12 +1,25 @@
 export interface ILecture {
   id: number;
+  teacherId: number;
   lectureCode: string;
   lectureStartDate: string;
   lectureEndDate: string;
-  teacherId: number;
   lectureIsShow: number;
   createdAt?: string;
   updatedAt?: string;
+  deletedAt?: string | null;
+}
+
+export interface ILectureSession {
+  id: number;
+  sessionNo: string;
+  sessionDate: string;
+  description: string | null;
+  lectureId: number;
+  createdAt?: string;
+  updatedAt?: string;
+  deletedAt?: string | null;
+  lecture?: ILecture;
 }
 
 export interface ILectureSearchParams {

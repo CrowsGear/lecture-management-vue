@@ -1,3 +1,5 @@
+import type { ILectureSession } from './lecture';
+
 export interface IGradeImage {
   fileName: string;
   rawDateTime: string;
@@ -28,4 +30,15 @@ export interface IGradeUploadParams {
       sessionDate: string;
     };
   };
-} 
+}
+
+export interface IGradeResponse {
+  id: number;
+  gradeImageUrl: string;
+  lectureSessionId: number;
+  studentId: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  lectureSession: ILectureSession;
+}
