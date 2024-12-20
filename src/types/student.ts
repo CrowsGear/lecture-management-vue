@@ -1,3 +1,5 @@
+import type { ISearchParams } from './common/searchParams';
+
 export interface IParent {
   parentPhone: string;
 }
@@ -37,11 +39,7 @@ export interface IStudentForm {
   password?: string;
 }
 
-export interface IStudentSearchParams {
+export interface IStudentSearchParams extends ISearchParams {
   studentName?: string;
   schoolName?: string;
-  period?: {
-    start: string;
-    end: string;
-  };
 } 

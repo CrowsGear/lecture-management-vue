@@ -1,3 +1,5 @@
+import type { ISearchParams } from './common/searchParams';
+
 export interface ITeacher {
   id: number;
   teacherName: string;
@@ -8,10 +10,6 @@ export interface ITeacher {
   deletedAt?: string;
 }
 
-export interface ITeacherSearchParams {
+export interface ITeacherSearchParams extends ISearchParams {
   teacherName?: string;
-  period?: {
-    start: string;
-    end: string;
-  };
 } 

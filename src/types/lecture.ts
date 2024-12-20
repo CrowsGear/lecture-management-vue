@@ -1,3 +1,5 @@
+import type { ISearchParams } from './common/searchParams';
+
 export interface ILecture {
   id: number;
   teacherId: number;
@@ -22,10 +24,6 @@ export interface ILectureSession {
   lecture?: ILecture;
 }
 
-export interface ILectureSearchParams {
+export interface ILectureSearchParams extends ISearchParams {
   lectureCode?: string;
-  period?: {
-    start: string;
-    end: string;
-  };
 } 
