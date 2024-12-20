@@ -1,4 +1,26 @@
 <script setup lang="ts">
+import { onMounted } from 'vue';
+import { useAuthStore } from '../stores/auth';
+import { useRouter } from 'vue-router';
+
+const authStore = useAuthStore();
+const router = useRouter();
+onMounted(() => {
+  if (!authStore.isAuthenticated) {
+    alert('로그인 후 이용해주세요.');
+    router.push('/');
+    return;
+  }
+  if (authStore.authType !== '0') {
+    alert('관리자 권한이 필요합니다.');
+    router.push('/');
+    return;
+  }
+
+  /* TODO: 관리자 권한 검증 로직 추가 
+  * 2차적으로 한 번 더 API 호출을 통해 관리자 권한 검증 로직 추가 필요
+  */
+});
 </script>
 
 <template>
