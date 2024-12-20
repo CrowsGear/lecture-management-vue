@@ -1,12 +1,16 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import axios from '../utils/axios';
+import { useRouter } from 'vue-router';
+import { AxiosError } from 'axios';
 
 const TOKEN_NAME = 'lmtk';
 const AUTH_TYPE_NAME = 'lmtk_a_t';
+const AUTH_TYPES = [0,1,2];
 
 
 export const useAuthStore = defineStore('auth', () => {
+  const router = useRouter();
   const token = ref<string | null>(localStorage.getItem(TOKEN_NAME));
   const authType = ref<string | null>(localStorage.getItem(AUTH_TYPE_NAME));
   const isAuthenticated = ref<boolean>(!!token.value);
@@ -29,12 +33,43 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await axios.post('/auths/login', credentials);
       const { authType: newAuthType, accessToken: newToken } = response.data.data;
 
+      /* 로그인 실패 */
+      if (!AUTH_TYPES.includes(newAuthType) || !newToken) {
+        throw new Error(response.data.message);
+      }
+
+      /* 강사: 관리자 페이지 이동 */
+      if (newAuthType === 0) {
+        console.log("should go to admin page");
+        router.push('/admin');
+      }
+
+      /* 학생: 메인 페이지 이동 */
+      if (newAuthType === 1) {
+        console.log("should go to student page");
+        router.push('/grades');
+      }
+
+      /* 학부모: 메인 페이지 이동 */
+      if (newAuthType === 2) {
+        console.log("should go to parent page");
+        router.push('/grades');
+      }
+
+      /* 로그인 성공 */
       setAuthType(newAuthType);
       setToken(newToken);
 
       return response.data;
     } catch (error) {
-      console.error('Login failed:', error);
+      if (
+        error instanceof AxiosError && 
+        error.response?.status === 404
+      ) {
+        alert(error.response.data?.message);
+        return;
+      }
+      alert(`로그인 실패: ${(error as Error).message}`);
       throw error;
     }
   };
@@ -49,6 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     token,
+    authType,
     isAuthenticated,
     login,
     logout,
