@@ -9,30 +9,32 @@ import { useRouter } from 'vue-router';
 const authStore = useAuthStore();
 const router = useRouter();
 const loading = ref(false);
-const grades = ref<IGradeResponse[]>([]);
+const gradeData = ref<IGradeResponse[]>([]);
 const selectedGrade = ref<IGradeResponse | null>(null);
 
 /* 최신 성적순으로 정렬된 목록 */
 const sortedGrades = computed(() => {
-  return [...grades.value].sort((a, b) => 
+  return [...gradeData.value].sort((a, b) => 
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 });
 
+/* 성적 데이터 불러오기 */
 const fetch = async () => {
-  try {
-    loading.value = true;
-    const response = await fetchGrades();
-    grades.value = response.data;
-    /* 최신 성적을 기본 선택 */
-    selectedGrade.value = sortedGrades.value[0];
-  } catch (error) {
-    alert(`성적 정보를 불러오는 중 오류가 발생했습니다. ${(error as Error).message}`);
-  } finally {
-    loading.value = false;
-  }
+    try {
+        loading.value = true;
+        const response = await fetchGrades();
+        gradeData.value = response.data.items;
+        /* 최신 성적을 기본 선택 */
+        selectedGrade.value = sortedGrades.value[0];
+    } catch (error) {
+        alert(`성적 정보를 불러오는 중 오류가 발생했습니다. ${(error as Error).message}`);
+    } finally {
+        loading.value = false;
+    }
 };
 
+/* 성적 선택 */
 const handleSelectGrade = (grade: IGradeResponse) => {
   selectedGrade.value = grade;
 };
@@ -53,7 +55,7 @@ onMounted(() => {
     <div v-if="loading" class="loading">
       성적 정보를 불러오는 중...
     </div>
-    <div v-else-if="!grades.length" class="no-data">
+    <div v-else-if="!gradeData.length" class="no-data">
       등록된 성적이 없습니다.
     </div>
     <template v-else>

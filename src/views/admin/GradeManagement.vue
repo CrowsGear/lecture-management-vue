@@ -259,14 +259,16 @@ const loading = ref(false);
 const totalCount = ref(0);
 const currentPage = ref(1);
 const perPage = ref(50);
+const totalPages = ref(1);
 
 /* 검색 핸들러 */
 const handleSearch = async () => {
   try {
     loading.value = true;
     const response = await fetchGrades(searchParams.value);
-    gradeData.value = response.data;
-    totalCount.value = response.data.length;
+    gradeData.value = response.data.items;
+    totalCount.value = response.data.count;
+    totalPages.value = Math.ceil(totalCount.value / perPage.value);
   } catch (error) {
     console.error('Failed to fetch grades:', error);
     alert('성적 목록 조회 중 오류가 발생했습니다.');
@@ -333,6 +335,7 @@ onMounted(() => {
       :total-count="totalCount"
       :current-page="currentPage"
       :per-page="perPage"
+      :total-pages="totalPages"
       :per-page-options="[50, 100]"
       @update="handleUpdate"
       @delete="handleDelete"
