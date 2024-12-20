@@ -1,20 +1,15 @@
 import axios from '../utils/axios';
-import type { ITeacher } from '../types/teacher';
-
-interface ITeacherResponse {
-  data: ITeacher | ITeacher[];
-  message?: string;
-  success: boolean;
-}
+import type { ITeacher, ITeacherSearchParams } from '../types/teacher';
+import type { IResponse } from '../types/common/response';
 
 /**
  * 강사 목록 조회
  * @description 전체 강사 목록을 조회합니다.
- * @returns {Promise<ITeacherResponse>} 강사 목록 응답
+ * @returns {Promise<IResponse>} 강사 목록 응답
  */
-export const fetchTeachers = async (): Promise<ITeacherResponse> => {
+export const fetchTeachers = async (searchParams?: ITeacherSearchParams): Promise<IResponse> => {
   try {
-    const response = await axios.get('/teachers');
+    const response = await axios.get('/teachers', { params: searchParams });
     return response.data;
   } catch (error) {
     console.error('Failed to fetch teachers:', error);
@@ -26,7 +21,7 @@ export const fetchTeachers = async (): Promise<ITeacherResponse> => {
  * 강사 추가
  * @param teacherData - 추가할 강사 정보
  */
-export const createTeacher = async (teacherData: Partial<ITeacher>): Promise<ITeacherResponse> => {
+export const createTeacher = async (teacherData: Partial<ITeacher>): Promise<IResponse> => {
   try {
     const response = await axios.post('/teachers', teacherData);
     return response.data;
@@ -41,7 +36,7 @@ export const createTeacher = async (teacherData: Partial<ITeacher>): Promise<ITe
  * @param id - 수정할 강사 ID
  * @param teacherData - 수정할 강사 정보
  */
-export const updateTeacher = async (id: number, teacherData: Partial<ITeacher>): Promise<ITeacherResponse> => {
+export const updateTeacher = async (id: number, teacherData: Partial<ITeacher>): Promise<IResponse> => {
   try {
     const response = await axios.put(`/teachers/${id}`, teacherData);
     return response.data;
@@ -55,7 +50,7 @@ export const updateTeacher = async (id: number, teacherData: Partial<ITeacher>):
  * 강사 삭제
  * @param id - 삭제할 강사 ID
  */
-export const deleteTeacher = async (id: number): Promise<ITeacherResponse> => {
+export const deleteTeacher = async (id: number): Promise<IResponse> => {
   try {
     const response = await axios.delete(`/teachers/${id}`);
     return response.data;

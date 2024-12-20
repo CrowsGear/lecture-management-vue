@@ -1,15 +1,10 @@
 import axios from '../utils/axios';
-import type { IStudent, IStudentUploadData } from '../types/student';
+import type { IStudentUploadData, IStudentSearchParams } from '../types/student';
+import type { IResponse } from '../types/common/response';
 
-interface IStudentResponse {
-  data: IStudent[];
-  message?: string;
-  success: boolean;
-}
-
-export const fetchStudents = async (): Promise<IStudentResponse> => {
+export const fetchStudents = async (searchParams?: IStudentSearchParams): Promise<IResponse> => {
   try {
-    const response = await axios.get('/students');
+    const response = await axios.get('/students', { params: searchParams });
     return response.data;
   } catch (error) {
     console.error('Failed to fetch students:', error);
@@ -17,7 +12,7 @@ export const fetchStudents = async (): Promise<IStudentResponse> => {
   }
 };
 
-export const createStudent = async (studentData: any): Promise<IStudentResponse> => {
+export const createStudent = async (studentData: any): Promise<IResponse> => {
   try {
     const response = await axios.post('/students', studentData);
     return response.data;
@@ -27,7 +22,7 @@ export const createStudent = async (studentData: any): Promise<IStudentResponse>
   }
 };
 
-export const updateStudent = async (id: string, studentData: any): Promise<IStudentResponse> => {
+export const updateStudent = async (id: string, studentData: any): Promise<IResponse> => {
   try {
     const response = await axios.put(`/students/${id}`, studentData);
     return response.data;
@@ -37,7 +32,7 @@ export const updateStudent = async (id: string, studentData: any): Promise<IStud
   }
 };
 
-export const deleteStudent = async (id: string): Promise<IStudentResponse> => {
+export const deleteStudent = async (id: string): Promise<IResponse> => {
   try {
     const response = await axios.delete(`/students/${id}`);
     return response.data;
@@ -47,7 +42,7 @@ export const deleteStudent = async (id: string): Promise<IStudentResponse> => {
   }
 }; 
 
-export const uploadStudents = async (studentData: IStudentUploadData): Promise<IStudentResponse> => {
+export const uploadStudents = async (studentData: IStudentUploadData): Promise<IResponse> => {
   try {
     const response = await axios.post('/common/uploads', studentData);
     return response.data;

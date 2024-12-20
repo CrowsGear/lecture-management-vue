@@ -1,15 +1,12 @@
 import axios from '../utils/axios';
 import type { ILecture } from '../types/lecture';
+import type { ITeacherSearchParams } from '../types/teacher';
+import type { IResponse } from '../types/common/response';
 
-interface ILectureResponse {
-  data: ILecture[];
-  message?: string;
-  success: boolean;
-}
 
-export const fetchLectures = async (): Promise<ILectureResponse> => {
+export const fetchLectures = async (searchParams?: ITeacherSearchParams): Promise<IResponse> => {
   try {
-    const response = await axios.get('/lectures');
+    const response = await axios.get('/lectures', { params: searchParams });
     return response.data;
   } catch (error) {
     console.error('Failed to fetch lectures:', error);
@@ -17,7 +14,7 @@ export const fetchLectures = async (): Promise<ILectureResponse> => {
   }
 };
 
-export const createLecture = async (lectureData: Partial<ILecture>): Promise<ILectureResponse> => {
+export const createLecture = async (lectureData: Partial<ILecture>): Promise<IResponse> => {
   try {
     const response = await axios.post('/lectures', lectureData);
     return response.data;
@@ -27,7 +24,7 @@ export const createLecture = async (lectureData: Partial<ILecture>): Promise<ILe
   }
 };
 
-export const updateLecture = async (id: number, lectureData: Partial<ILecture>): Promise<ILectureResponse> => {
+export const updateLecture = async (id: number, lectureData: Partial<ILecture>): Promise<IResponse> => {
   try {
     const response = await axios.put(`/lectures/${id}`, lectureData);
     return response.data;
