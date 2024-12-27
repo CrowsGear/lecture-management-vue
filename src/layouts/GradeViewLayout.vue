@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { useAuthStore } from '../stores/auth';
-import { fetchGrades } from '../api/grade';
-import GradeView from '../views/GradeView.vue';
-import type { IGradeResponse } from '../types/grade';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, computed } from "vue";
+import { useAuthStore } from "../stores/auth";
+import { fetchGrades } from "../api/grade";
+import GradeView from "../views/GradeView.vue";
+import type { IGradeResponse } from "../types/grade";
+import { useRouter } from "vue-router";
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -24,6 +24,7 @@ const fetch = async () => {
     try {
         loading.value = true;
         const response = await fetchGrades();
+        console.log(response);
         gradeData.value = response.data.items;
         /* 최신 성적을 기본 선택 */
         selectedGrade.value = sortedGrades.value[0];
@@ -43,8 +44,8 @@ onMounted(() => {
   if (authStore.isAuthenticated) {
     fetch();
   } else {
-    alert('로그인 후 이용해주세요.');
-    router.push('/');
+    alert("로그인 후 이용해주세요.");
+    router.push("/");
     return;
   }
 });
@@ -62,7 +63,7 @@ onMounted(() => {
       <!-- 성적 정보 헤더 -->
       <div class="grade-header">
         <div v-if="selectedGrade" class="grade-info">
-          <h3>{{ selectedGrade.lectureSession!.lecture!.lectureCode }}</h3>
+          <h3>{{ selectedGrade.lectureSession!.lecture!.title }}</h3>
           <span class="date">{{ new Date(selectedGrade.lectureSession.sessionDate).toLocaleDateString() }}</span>
         </div>
 
@@ -75,7 +76,7 @@ onMounted(() => {
             :class="{ active: selectedGrade?.id === grade.id }"
             @click="handleSelectGrade(grade)"
           >
-            <span class="lecture-code">{{ grade.lectureSession!.lecture!.lectureCode }}</span>
+            <span class="lecture-code">{{ grade.lectureSession!.lecture!.title }}</span>
             <span class="date">{{ new Date(grade.lectureSession.sessionDate).toLocaleDateString() }}</span>
           </div>
         </div>

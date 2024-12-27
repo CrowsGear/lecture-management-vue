@@ -11,7 +11,7 @@
  *   @files-selected="handleFiles"
  * />
  */
-import { ref } from 'vue';
+import { ref } from "vue";
 
 /**
  * Props 정의
@@ -33,8 +33,8 @@ const props = defineProps<{
  * @emit {string} error - 에러 메시지
  */
 const emit = defineEmits<{
-  (e: 'files-selected', files: File[]): void;
-  (e: 'error', message: string): void;
+  (e: "files-selected", files: File[]): void;
+  (e: "error", message: string): void;
 }>();
 
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -48,14 +48,14 @@ const isDragging = ref(false);
 const validateFiles = (files: File[]): boolean => {
   // 파일 확장자 검사
   if (props.accept) {
-    const allowedTypes = props.accept.split(',');
+    const allowedTypes = props.accept.split(",");
     const invalid = files.some(file => {
-      const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+      const ext = "." + file.name.split(".").pop()?.toLowerCase();
       return !allowedTypes.includes(ext);
     });
     
     if (invalid) {
-      emit('error', `허용된 파일 형식: ${props.accept}`);
+      emit("error", `허용된 파일 형식: ${props.accept}`);
       return false;
     }
   }
@@ -64,7 +64,7 @@ const validateFiles = (files: File[]): boolean => {
   if (props.maxSize) {
     const oversized = files.some(file => file.size > props.maxSize!);
     if (oversized) {
-      emit('error', `최대 파일 크기: ${props.maxSize! / 1024 / 1024}MB`);
+      emit("error", `최대 파일 크기: ${props.maxSize! / 1024 / 1024}MB`);
       return false;
     }
   }
@@ -81,7 +81,7 @@ const handleFiles = (fileList: FileList) => {
   
   const files = Array.from(fileList);
   if (validateFiles(files)) {
-    emit('files-selected', props.multiple ? files : [files[0]]);
+    emit("files-selected", props.multiple ? files : [files[0]]);
   }
 };
 

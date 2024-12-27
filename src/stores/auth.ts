@@ -1,15 +1,15 @@
-import { defineStore } from 'pinia';
-import { ref } from 'vue';
-import axios from '../utils/axios';
-import { useRouter } from 'vue-router';
-import { AxiosError } from 'axios';
+import { defineStore } from "pinia";
+import { ref } from "vue";
+import axios from "../utils/axios";
+import { useRouter } from "vue-router";
+import { AxiosError } from "axios";
 
-const TOKEN_NAME = 'lmtk';
-const AUTH_TYPE_NAME = 'lmtk_a_t';
+const TOKEN_NAME = "lmtk";
+const AUTH_TYPE_NAME = "lmtk_a_t";
 const AUTH_TYPES = [0,1,2];
 
 
-export const useAuthStore = defineStore('auth', () => {
+export const useAuthStore = defineStore("auth", () => {
   const router = useRouter();
   const token = ref<string | null>(localStorage.getItem(TOKEN_NAME));
   const authType = ref<string | null>(localStorage.getItem(AUTH_TYPE_NAME));
@@ -25,12 +25,12 @@ export const useAuthStore = defineStore('auth', () => {
   const setAuthType = (newAuthType: number) => {
     authType.value = newAuthType.toString();
     localStorage.setItem(AUTH_TYPE_NAME, newAuthType.toString());
-  }
+  };
 
   /* 로그인 */
   const login = async (credentials: { phone: string; password: string }) => {
     try {
-      const response = await axios.post('/auths/login', credentials);
+      const response = await axios.post("/auths/login", credentials);
       const { authType: newAuthType, accessToken: newToken } = response.data.data;
 
       /* 로그인 실패 */
@@ -41,19 +41,19 @@ export const useAuthStore = defineStore('auth', () => {
       /* 강사: 관리자 페이지 이동 */
       if (newAuthType === 0) {
         console.log("should go to admin page");
-        router.push('/admin');
+        router.push("/admin");
       }
 
       /* 학생: 메인 페이지 이동 */
       if (newAuthType === 1) {
         console.log("should go to student page");
-        router.push('/grades');
+        router.push("/grades");
       }
 
       /* 학부모: 메인 페이지 이동 */
       if (newAuthType === 2) {
         console.log("should go to parent page");
-        router.push('/grades');
+        router.push("/grades");
       }
 
       /* 로그인 성공 */

@@ -12,8 +12,8 @@
  *   @submit="handleSubmit"
  * />
  */
-import { reactive, watch } from 'vue';
-import type { IFormConfig } from '../../types/common/form';
+import { reactive, watch } from "vue";
+import type { IFormConfig } from "../../types/common/form";
 
 /**
  * Props 정의
@@ -35,8 +35,8 @@ const props = defineProps<{
  * @emit {Record<string, any>} submit - 폼 제출 데이터
  */
 const emit = defineEmits<{
-  (e: 'update:show', value: boolean): void;
-  (e: 'submit', data: Record<string, any>): void;
+  (e: "update:show", value: boolean): void;
+  (e: "submit", data: Record<string, any>): void;
 }>();
 
 /**
@@ -55,7 +55,7 @@ const initForm = () => {
     if (props.initialData && props.initialData[field.name] !== undefined) {
       formData[field.name] = props.initialData[field.name];
     } else {
-      formData[field.name] = '';
+      formData[field.name] = "";
     }
   });
 };
@@ -85,7 +85,7 @@ watch(() => props.show, (newVal) => {
  * formData를 복사하여 부모 컴포넌트로 전달
  */
 const handleSubmit = () => {
-  emit('submit', { ...formData });
+  emit("submit", { ...formData });
 };
 
 /**
@@ -93,7 +93,7 @@ const handleSubmit = () => {
  * show 상태를 false로 변경
  */
 const closeModal = () => {
-  emit('update:show', false);
+  emit("update:show", false);
 };
 </script>
 

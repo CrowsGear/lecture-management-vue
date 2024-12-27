@@ -1,6 +1,6 @@
 export interface IBanner {
   id?: number;
-  position: 'top' | 'bottom';
+  position: "top" | "bottom";
   imageUrl: string;
   isActive: boolean;
   createdAt?: string;

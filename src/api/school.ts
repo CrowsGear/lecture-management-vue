@@ -9,11 +9,11 @@ import type { IResponse } from "../types/common/response.ts";
 export const fetchSchools = async (params: ISchoolSearchParams): Promise<IResponse> => {
     const response = await axios
         .get(
-            '/schools',
+            "/schools",
             { params }
         );
     return response.data;
-}
+};
 
 /* 학교 삭제 by id */
 export const deleteSchool = async (id: number): Promise<IResponse> => {
@@ -21,7 +21,7 @@ export const deleteSchool = async (id: number): Promise<IResponse> => {
     const response = await axios.delete(`/schools/${id}`);
     return response.data;
   } catch (error) {
-    console.error('Failed to delete school:', error);
+    console.error("Failed to delete school:", error);
     throw error;
   }
 };

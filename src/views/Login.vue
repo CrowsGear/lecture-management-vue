@@ -1,12 +1,12 @@
 <script setup lang="ts">
 /* Third Party */
-import { ref } from 'vue';
+import { ref } from "vue";
 
 /* stores */
-import { useAuthStore } from '../stores/auth';
+import { useAuthStore } from "../stores/auth";
 
 /* types */
-import type { ILoginForm } from '../types/login';
+import type { ILoginForm } from "../types/login";
 
 /* constants */
 const PHONE_REGEX = /^\d{8}$/;
@@ -15,13 +15,16 @@ const PASSWORD_REGEX = /^\d{5}$/;
 const authStore = useAuthStore();
 
 const form = ref<ILoginForm>({
-  phone: '',
-  password: ''
+  phone: "",
+  password: ""
 });
 
+const bannerTop = ref<string>("/src/assets/daily_report_top_only_kjs0928.jpeg");
+const bannerBottom = ref<string>("");
+
 const errors = ref({
-  phone: '',
-  password: ''
+  phone: "",
+  password: ""
 });
 
 /**
@@ -29,7 +32,7 @@ const errors = ref({
  * @param event - 키보드 이벤트
  */
 const handleKeyPress = (event: KeyboardEvent) => {
-  if (event.key === 'Enter') {
+  if (event.key === "Enter") {
     handleLogin();
   }
 };
@@ -41,14 +44,14 @@ const handleKeyPress = (event: KeyboardEvent) => {
  */
 const validatePhone = (value: string) => {
   if (!value) {
-    errors.value.phone = '';
+    errors.value.phone = "";
     return false;
   }
   if (!PHONE_REGEX.test(value)) {
-    errors.value.phone = '휴대폰 번호 뒤 8자리를 입력해주세요.';
+    errors.value.phone = "휴대폰 번호 뒤 8자리를 입력해주세요.";
     return false;
   }
-  errors.value.phone = '';
+  errors.value.phone = "";
   return true;
 };
 
@@ -59,14 +62,14 @@ const validatePhone = (value: string) => {
  */
 const validatePassword = (value: string) => {
   if (!value) {
-    errors.value.password = '';
+    errors.value.password = "";
     return false;
   }
   if (!PASSWORD_REGEX.test(value)) {
-    errors.value.password = '비밀번호는 5자리 숫자여야 합니다.';
+    errors.value.password = "비밀번호는 5자리 숫자여야 합니다.";
     return false;
   }
-  errors.value.password = '';
+  errors.value.password = "";
   return true;
 };
 
@@ -90,52 +93,17 @@ const handleLogin = async (): Promise<void> => {
     await authStore.login(loginData);
 
   } catch (error) {
-    console.error('Login failed:', error);
+    console.error("Login failed:", error);
   }
 };
-
-// CSS 변수 정의
-const colors = {
-  light: {
-    '--text-color': '#000000',
-    '--bg-color': '#ffffff',
-    '--border-color': '#000000',
-    '--error-color': '#ff0000',
-    '--button-bg': '#000000',
-    '--button-text': '#ffffff',
-    '--button-disabled': '#666666',
-    '--divider-color': '#000000'
-  },
-  dark: {
-    '--text-color': '#ffffff',
-    '--bg-color': '#1a1a1a',
-    '--border-color': '#ffffff',
-    '--error-color': '#ff6b6b',
-    '--button-bg': '#ffffff',
-    '--button-text': '#000000',
-    '--button-disabled': '#999999',
-    '--divider-color': '#ffffff'
-  }
-};
-
-// 시스템 다크 모드 감지 및 CSS 변수 적용
-if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-  Object.entries(colors.dark).forEach(([key, value]) => {
-    document.documentElement.style.setProperty(key, value);
-  });
-} else {
-  Object.entries(colors.light).forEach(([key, value]) => {
-    document.documentElement.style.setProperty(key, value);
-  });
-}
 
 </script>
 
 <template>
   <div class="login-container">
     <!-- 상단 배너 이미지 -->
-    <div class="banner banner-top">
-      <img src="../assets/daily_report_top.jpeg" alt="상단 배너" />
+    <div v-if="bannerTop" class="banner banner-top">
+      <img src="../assets/daily_report_top_only_kjs0928.jpeg" alt="상단 배너" />
     </div>
 
     <!-- 로그인 폼 -->
@@ -207,8 +175,8 @@ if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
     </div>
 
     <!-- 하단 배너 이미지 -->
-    <div class="banner banner-bottom">
-      <img src="../assets/daily_report_bottom.jpeg" alt="하단 배너" />
+    <div v-if="bannerBottom" class="banner banner-bottom">
+      <img :src="bannerBottom" alt="" />
     </div>
   </div>
 </template>
@@ -387,13 +355,6 @@ input {
 @media (min-width: 769px) and (max-width: 1024px) {
   .login-form {
     padding: 1rem;
-  }
-}
-
-/* 다크 모드 미디어 쿼리 */
-@media (prefers-color-scheme: dark) {
-  input::placeholder {
-    color: rgba(255, 255, 255, 0.6);
   }
 }
 </style>

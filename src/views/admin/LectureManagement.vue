@@ -1,30 +1,28 @@
 <script setup lang="ts">
 /* Third Party */
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted } from "vue";
 
 /* Components */
-import SearchForm from '../../components/admin/SearchForm.vue';
-import DataTable from '../../components/admin/DataTable.vue';
-import FormModal from '../../components/common/FormModal.vue';
+import SearchForm from "../../components/admin/SearchForm.vue";
+import DataTable from "../../components/admin/DataTable.vue";
+import FormModal from "../../components/common/FormModal.vue";
 
 /* Types */
-import type { ISearchConfig } from '../../types/common/common';
-import type { IFormConfig } from '../../types/common/form';
-import type { ILecture, ILectureSearchParams } from '../../types/lecture';
-import type { ITeacher } from '../../types/teacher';
+import type { ISearchConfig } from "../../types/common/common";
+import type { IFormConfig } from "../../types/common/form";
+import type { ILecture, ILectureSearchParams } from "../../types/lecture";
+import type { ITeacher } from "../../types/teacher";
 import type { ITableInfo } from "../../types/common/common";
 
 /* APIs */
-import { fetchLectures, createLecture, updateLecture } from '../../api/lecture';
-import { fetchTeachers } from '../../api/teacher';
+import { fetchLectures, createLecture, updateLecture } from "../../api/lecture";
+import { fetchTeachers } from "../../api/teacher";
 
 /* 검색 파라미터 for SearchForm.vue */
 const searchParams = ref<ILectureSearchParams>({
   lectureCode: "",
-  period: {
-    start: "",
-    end: ""
-  },
+  startDate: undefined,
+  endDate: undefined,
   page: 1,
   limit: 50
 });
@@ -33,30 +31,30 @@ const searchParams = ref<ILectureSearchParams>({
 const searchConfig: ISearchConfig = {
   fields: [
     {
-      name: 'lectureCode',
-      label: '강의 코드',
-      type: 'text',
-      placeholder: '강의 코드를 입력하세요'
+      name: "lectureCode",
+      label: "강의 코드",
+      type: "text",
+      placeholder: "강의 코드를 입력하세요"
     },
     {
-      name: 'period',
-      label: '등록기간',
-      type: 'period'
+      name: "period",
+      label: "등록기간",
+      type: "period"
     }
   ],
   periods: [
-    { label: '오늘', value: 'today' },
-    { label: '1주일', value: 'week' },
-    { label: '1개월', value: 'month' },
-    { label: '3개월', value: '3months' }
+    { label: "오늘", value: "today" },
+    { label: "1주일", value: "week" },
+    { label: "1개월", value: "month" },
+    { label: "3개월", value: "3months" }
   ]
 };
 
 /* 강의 추가/수정 폼 관련 */
 const lectureForm = reactive<Partial<ILecture>>({
-  lectureCode: '',
-  lectureStartDate: '',
-  lectureEndDate: '',
+  lectureCode: "",
+  lectureStartDate: "",
+  lectureEndDate: "",
   teacherId: undefined,
   lectureIsShow: 0
 });
@@ -70,42 +68,42 @@ const showForm = ref(false);
  * @see getTeachers
  */
  const lectureFormConfig: IFormConfig = {
-  title: '강의 정보',
+  title: "강의 정보",
   fields: [
     { 
-      name: 'lectureCode', 
-      label: '강의 코드', 
-      type: 'text', 
+      name: "lectureCode", 
+      label: "강의 코드", 
+      type: "text", 
       required: true,
       disabled: false 
     },
     { 
-      name: 'lectureStartDate', 
-      label: '시작일', 
-      type: 'date', 
+      name: "lectureStartDate", 
+      label: "시작일", 
+      type: "date", 
       required: true 
     },
     { 
-      name: 'lectureEndDate', 
-      label: '종료일', 
-      type: 'date', 
+      name: "lectureEndDate", 
+      label: "종료일", 
+      type: "date", 
       required: true 
     },
     { 
-      name: 'teacherId', 
-      label: '강사 ID', 
-      type: 'select', 
+      name: "teacherId", 
+      label: "강사 ID", 
+      type: "select", 
       required: true,
       options: []
     },
     { 
-      name: 'lectureIsShow', 
-      label: '노출 여부', 
-      type: 'select', 
+      name: "lectureIsShow", 
+      label: "노출 여부", 
+      type: "select", 
       required: true,
       options: [
-        { label: '노출', value: 1 },
-        { label: '비노출', value: 0 }
+        { label: "노출", value: 1 },
+        { label: "비노출", value: 0 }
       ]
     }
   ]
@@ -116,22 +114,22 @@ const lectureTableInfo = ref<ITableInfo>({
     tableName: "lecture",
     tableComment: "강의",
     columns: [
-        { name: 'lectureCode', comment: '강의 코드' },
-        { name: 'lectureStartDate', comment: '시작일' },
-        { name: 'lectureEndDate', comment: '종료일' },
-        { name: 'teacherId', comment: '강사 ID' },
-        { name: 'lectureIsShow', comment: '노출 여부' },
-        { name: 'createdAt', comment: '등록일자' }
+        { name: "lectureCode", comment: "강의 코드" },
+        { name: "lectureStartDate", comment: "시작일" },
+        { name: "lectureEndDate", comment: "종료일" },
+        { name: ["teacher", "teacherName"], comment: "강사명" },
+        { name: "lectureIsShow", comment: "노출 여부" },
+        { name: "createdAt", comment: "등록일자" }
     ]
 });
 
 /* 강의 데이터 for DataTable.vue */
 const lectureData = ref<ILecture[]>([]);
 const loading = ref<boolean>(false);
-const totalCount = ref<number>(0)
-const currentPage = ref<number>(1)
-const perPage = ref<number>(50)
-const totalPages = ref<number>(1)
+const totalCount = ref<number>(0);
+const currentPage = ref<number>(1);
+const perPage = ref<number>(50);
+const totalPages = ref<number>(1);
 
 /* 검색 처리 */
 const handleSearch = async () => {
@@ -142,8 +140,8 @@ const handleSearch = async () => {
     totalCount.value = result.data.count;
     totalPages.value = Math.ceil(totalCount.value / perPage.value);
   } catch (error) {
-    alert('강의 목록을 불러오는 중 오류가 발생했습니다.');
-    console.error('Failed to fetch lectures:', error);
+    alert("강의 목록을 불러오는 중 오류가 발생했습니다.");
+    console.error("Failed to fetch lectures:", error);
   } finally {
     loading.value = false;
   }
@@ -159,7 +157,7 @@ const handleSearch = async () => {
       const response = await updateLecture(parseInt(editingId.value), formData);
       if (response.code === "SC-04") {
         /* TODO: 응답 코드 협상 */
-        alert('강의 정보가 수정되었습니다.');
+        alert("강의 정보가 수정되었습니다.");
         showForm.value = false;
         await handleSearch();
       }
@@ -167,40 +165,42 @@ const handleSearch = async () => {
       const response = await createLecture(formData);
       if (response.code === "SC-04") {
         /* TODO: 응답 코드 협상 */
-        alert('강의가 추가되었습니다.');
+        alert("강의가 추가되었습니다.");
         showForm.value = false;
         await handleSearch();
       }
     }
   } catch (error) {
-    console.error('Failed to submit lecture:', error);
-    alert('처리 중 오류가 발생했습니다.');
+    console.error("Failed to submit lecture:", error);
+    alert("처리 중 오류가 발생했습니다.");
   }
 };
 
 const handlePageChange = (page: number) => {
   currentPage.value = page;
+  searchParams.value.page = page;
   handleSearch();
 };
 
 const handlePerPageChange = (count: number) => {
   perPage.value = count;
-  currentPage.value = 1; // 페이지 수 변경시 첫 페이지로
+  searchParams.value.page = 1;
+  searchParams.value.limit = count;
   handleSearch();
 };
 
 /* 폼 초기화 */
 const resetForm = () => {
   Object.keys(lectureForm).forEach(key => {
-    if (key === 'teacherId') {
+    if (key === "teacherId") {
       (lectureForm as any)[key] = undefined;
-    } else if (key === 'lectureIsShow') {
+    } else if (key === "lectureIsShow") {
       (lectureForm as any)[key] = 0;
     } else {
-      (lectureForm as any)[key] = '';
+      (lectureForm as any)[key] = "";
     }
   });
-  isEditing.value = false
+  isEditing.value = false;
   editingId.value = null;
 };
 

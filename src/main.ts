@@ -1,12 +1,12 @@
-import { createApp } from 'vue';
-import { createPinia } from 'pinia';
-import './style.css'
-import App from './App.vue'
-import router from './router'
-import { initTheme } from './styles/theme';
+import { createApp } from "vue";
+import { createPinia } from "pinia";
+import "./style.css";
+import App from "./App.vue";
+import router from "./router";
+import { initTheme } from "./styles/theme";
 
-const pinia = createPinia()
-const app = createApp(App)
+const pinia = createPinia();
+const app = createApp(App);
 
 // 테마 초기화
 initTheme();
@@ -19,4 +19,4 @@ app
     .use(pinia)
 
     /* mount */
-    .mount('#app')
+    .mount("#app");

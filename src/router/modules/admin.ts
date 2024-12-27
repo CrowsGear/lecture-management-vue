@@ -1,9 +1,9 @@
-import { RouteRecordRaw } from 'vue-router';
+import { RouteRecordRaw } from "vue-router";
 import AdminLayout from "../../layouts/AdminLayout.vue";
 
 const adminRoutes: RouteRecordRaw[] = [
     {
-        path: '/admin',
+        path: "/admin",
         component: AdminLayout,
         children: [
             {

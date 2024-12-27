@@ -1,58 +1,58 @@
 <script setup lang="ts">
-import {ref, computed} from 'vue'
-import {format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths} from 'date-fns'
+import {ref, computed} from "vue";
+import {format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths} from "date-fns";
 
 
 const props = defineProps<{
   modelValue: string;
   placeholder?: string;
-}>()
+}>();
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: string): void;
-}>()
+  (e: "update:modelValue", value: string): void;
+}>();
 
-const showCalendar = ref(false)
-const currentDate = ref(new Date())
-const weekDays = ['일', '월', '화', '수', '목', '금', '토']
+const showCalendar = ref(false);
+const currentDate = ref(new Date());
+const weekDays = ["일", "월", "화", "수", "목", "금", "토"];
 
 const formattedDate = computed(() => {
-  return props.modelValue ? format(new Date(props.modelValue), 'yyyy-MM-dd') : ''
-})
+  return props.modelValue ? format(new Date(props.modelValue), "yyyy-MM-dd") : "";
+});
 
-const currentYear = computed(() => currentDate.value.getFullYear())
-const currentMonth = computed(() => currentDate.value.getMonth())
+const currentYear = computed(() => currentDate.value.getFullYear());
+const currentMonth = computed(() => currentDate.value.getMonth());
 
 const calendarDays = computed(() => {
-  const start = startOfMonth(currentDate.value)
-  const end = endOfMonth(currentDate.value)
+  const start = startOfMonth(currentDate.value);
+  const end = endOfMonth(currentDate.value);
 
   return eachDayOfInterval({start, end}).map(date => ({
-    value: format(date, 'yyyy-MM-dd'),
+    value: format(date, "yyyy-MM-dd"),
     day: date.getDate(),
     otherMonth: false
-  }))
-})
+  }));
+});
 
 const closeCalendar = () => {
-  showCalendar.value = false
-}
+  showCalendar.value = false;
+};
 
 const selectDate = (date: string) => {
-  emit('update:modelValue', date)
-  closeCalendar()
-}
+  emit("update:modelValue", date);
+  closeCalendar();
+};
 
-const isSelected = (date: string) => date === props.modelValue
-const isToday = (date: string) => date === format(new Date(), 'yyyy-MM-dd')
+const isSelected = (date: string) => date === props.modelValue;
+const isToday = (date: string) => date === format(new Date(), "yyyy-MM-dd");
 
 const previousMonth = () => {
-  currentDate.value = subMonths(currentDate.value, 1)
-}
+  currentDate.value = subMonths(currentDate.value, 1);
+};
 
 const nextMonth = () => {
-  currentDate.value = addMonths(currentDate.value, 1)
-}
+  currentDate.value = addMonths(currentDate.value, 1);
+};
 </script>
 
 <template>

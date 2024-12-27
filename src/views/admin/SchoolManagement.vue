@@ -1,62 +1,60 @@
 <script setup lang="ts">
 /* Third Party */
-import { ref, onMounted } from 'vue'
+import { ref, onMounted } from "vue";
 
 /* Components */
-import SearchForm from '../../components/admin/SearchForm.vue'
-import DataTable from '../../components/admin/DataTable.vue'
+import SearchForm from "../../components/admin/SearchForm.vue";
+import DataTable from "../../components/admin/DataTable.vue";
 
 /* Types */
-import type { ISchoolSearchParams, ISchool } from '../../types/school.ts'
-import type { ISearchConfig } from '../../types/common/common.ts';
+import type { ISchoolSearchParams, ISchool } from "../../types/school.ts";
+import type { ISearchConfig } from "../../types/common/common.ts";
 import type { ITableInfo } from "../../types/common/common.ts";
 
 /* APIs */
-import { fetchSchools, deleteSchool } from '../../api/school.ts';
+import { fetchSchools, deleteSchool } from "../../api/school.ts";
 
 /* 검색 파라미터 for SearchForm.vue */
 const searchParams = ref<ISchoolSearchParams>({
   schoolName: "",
-  period: {
-    start: "",
-    end: ""
-  },
+  startDate: undefined,
+  endDate: undefined,
   page: 1,
   limit: 50
-})
+});
 
 /* 검색 옵션 for SearchForm.vue */
 const searchConfig: ISearchConfig = {
   fields: [
     {
-      name: 'schoolName',
-      label: '학교명',
-      type: 'text',
-      placeholder: '학교명을 입력하세요'
+      name: "schoolName",
+      label: "학교명",
+      type: "text",
+      placeholder: "학교명을 입력하세요"
     },
     {
-      name: 'period',
-      label: '등록기간',
-      type: 'period'
+      name: "period",
+      label: "등록기간",
+      type: "period"
     }
   ],
   periods: [
-    { label: '오늘', value: 'today' },
-    { label: '1주일', value: 'week' },
-    { label: '1개월', value: 'month' },
-    { label: '3개월', value: '3months' },
-    { label: '6개월', value: '6months' }
+    { label: "오늘", value: "today" },
+    { label: "1주일", value: "week" },
+    { label: "1개월", value: "month" },
+    { label: "3개월", value: "3months" },
+    { label: "6개월", value: "6months" }
   ]
-}
+};
 
 /* 테이블 정보 for DataTable.vue */
 const schoolTableInfo = ref<ITableInfo>({
   tableName: "school",
   tableComment: "학교",
   columns: [
-    { name: 'id', comment: 'ID' },
-    { name: 'schoolName', comment: '학교명' },
-    { name: 'createdAt', comment: '등록일자' }
+    { name: "id", comment: "ID" },
+    { name: "schoolName", comment: "학교명" },
+    { name: "createdAt", comment: "등록일자" }
   ]
 });
 
@@ -80,17 +78,17 @@ const handleSearch = async () => {
     totalCount.value = result.data.count;
     totalPages.value = Math.ceil(totalCount.value / perPage.value);
   } catch (error) {
-    console.error('Failed to fetch schools:', error)
+    console.error("Failed to fetch schools:", error);
   } finally {
     loading.value = false;
   }
-}
+};
 
 /* 업데이트 함수 for DataTable.vue */
 const handleUpdate = async (id: number, data: Partial<ISchool>) => {
   // 업데이트 로직 구현
   console.log(id, data);
-}
+};
 
 /* 삭제 함수 for DataTable.vue */
 const handleDelete = async (id: number) => {
@@ -98,12 +96,12 @@ const handleDelete = async (id: number) => {
     loading.value = true;
     const response = await deleteSchool(id);
     if (response.code === "SC-04") {
-      alert('삭제되었습니다.');
+      alert("삭제되었습니다.");
       await handleSearch();
     }
   } catch (error) {
-    console.error('Failed to delete school:', error);
-    alert('삭제 중 오류가 발생했습니다.');
+    console.error("Failed to delete school:", error);
+    alert("삭제 중 오류가 발생했습니다.");
   } finally {
     loading.value = false;
   }
@@ -112,20 +110,22 @@ const handleDelete = async (id: number) => {
 /* 페이지 변경 핸들러 */
 const handlePageChange = (page: number) => {
   currentPage.value = page;
+  searchParams.value.page = page;
   handleSearch();
 };
 
 /* 페이지당 항목 수 변경 핸들러 */
 const handlePerPageChange = (count: number) => {
   perPage.value = count;
-  currentPage.value = 1; // 페이지 수 변경시 첫 페이지로
+  searchParams.value.page = 1;
+  searchParams.value.limit = count;
   handleSearch();
 };
 
 /* 컴포넌트 마운트 시 검색 함수 실행 */
 onMounted(() => {
-  handleSearch()
-})
+  handleSearch();
+});
 </script>
 
 <template>

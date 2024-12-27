@@ -2,7 +2,7 @@
 export interface IFormField {
   name: string;
   label: string;
-  type: 'text' | 'number' | 'date' | 'select';
+  type: "text" | "number" | "date" | "select";
   required?: boolean;
   disabled?: boolean;
   placeholder?: string;

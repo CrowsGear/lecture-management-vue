@@ -1,30 +1,32 @@
 <script setup lang="ts">
 /* Third Party */ 
-import { ref, onUnmounted, onMounted } from 'vue';
+import { AxiosError } from "axios";
+import { ref, onUnmounted, onMounted } from "vue";
 
 /* Components */
-import SearchForm from '../../components/admin/SearchForm.vue';
-import DataTable from '../../components/admin/DataTable.vue';
-import FileDropZone from '../../components/common/FileDropZone.vue';
-import ImagePreviewModal from '../../components/common/ImagePreviewModal.vue';
+import SearchForm from "../../components/admin/SearchForm.vue";
+import DataTable from "../../components/admin/DataTable.vue";
+import FileDropZone from "../../components/common/FileDropZone.vue";
+import ImagePreviewModal from "../../components/common/ImagePreviewModal.vue";
 
 /* Types */
-import type { IGradeImage, IGradePreview, IGradeUploadParams } from '../../types/grade';
-import type { ISearchConfig } from '../../types/common/common';
-import type { ITableInfo } from '../../types/common/common';
+import type { IGradeImage, IGradeSearchParams, IGradePreview, IGradeUploadParams } from "../../types/grade";
+import type { ISearchConfig } from "../../types/common/common";
+import type { ITableInfo } from "../../types/common/common";
 
 /* APIs */
-import { uploadGradeImage, fetchGrades, deleteGrade } from '../../api/grade';
+import { validateGradeImage, uploadGradeImage, fetchGrades, deleteGrade } from "../../api/grade";
 
 const isLoading = ref(false);
 const uploadProgress = ref(0);
 const selectedFiles = ref<File[] | null>(null);
-const parsedImages = ref<IGradePreview[]>([]);
+const parsedSuccessImages = ref<IGradePreview[]>([]);
+const parsedFailedImages = ref<IGradePreview[]>([]);
 
 /* 이미지 미리보기 모달 관련 */
 const showPreviewModal = ref(false);
-const selectedPreviewUrl = ref('');
-const selectedFileName = ref('');
+const selectedPreviewUrl = ref("");
+const selectedFileName = ref("");
 
 const openPreviewModal = (image: IGradePreview) => {
   selectedPreviewUrl.value = image.previewUrl;
@@ -38,7 +40,7 @@ const openPreviewModal = (image: IGradePreview) => {
  * @returns {Partial<IGradeImage>} 파싱된 성적 이미지 정보
  */
 const parseFileName = (fileName: string): Partial<IGradeImage> => {
-  const [lectureCode, rawDateTime, studentCode] = fileName.split('.')[0].split('_');
+  const [lectureCode, rawDateTime, studentCode] = fileName.split(".")[0].split("_");
   
   // 강의코드 길이 검증
   if (lectureCode.length > 15) {
@@ -46,7 +48,7 @@ const parseFileName = (fileName: string): Partial<IGradeImage> => {
   }
   
   // 강의일시 파싱 (YYMMDDHHMM)
-  const year = '20' + rawDateTime.slice(0, 2);
+  const year = "20" + rawDateTime.slice(0, 2);
   const month = rawDateTime.slice(2, 4);
   const day = rawDateTime.slice(4, 6);
   const hour = rawDateTime.slice(6, 8);
@@ -68,23 +70,78 @@ const parseFileName = (fileName: string): Partial<IGradeImage> => {
  * @param file - 검사할 파일
  * @returns {boolean} 유효성 검사 결과
  */
-const validateFile = (file: File): boolean => {
-  const validExtensions = ['jpg', 'jpeg', 'png'];
-  const extension = file.name.split('.').pop()?.toLowerCase() || '';
+const validateFileName = (file: File): boolean => {
+  const validExtensions = ["jpg", "jpeg", "png"];
+  const extension = file.name.split(".").pop()?.toLowerCase() || "";
   
   if (!validExtensions.includes(extension)) {
-    alert('이미지 파일만 업로드 가능합니다.');
+    alert("이미지 파일만 업로드 가능합니다.");
     return false;
   }
   
   // 파일명 형식 검사 (강의코드(15자이하)_YYMMDDHHMM_ST학번.ext)
   const fileNamePattern = /^[A-Za-z0-9-_]{1,15}_\d{10}_ST\d{10}\.(jpg|jpeg|png)$/i;
   if (!fileNamePattern.test(file.name)) {
-    alert('파일명 형식이 올바르지 않습니다.\n형식: 강의코드(15자이하)_YYMMDDHHMM_ST학번.확장자');
+    alert("파일명 형식이 올바르지 않습니다.\n형식: 강의코드(15자이하)_YYMMDDHHMM_ST학번.확장자");
     return false;
   }
 
   return true;
+};
+
+const validateAndFilterGradeImage = async (file: File): Promise<any> => {
+  const parsedFileName = parseFileName(file.name);
+  const previewUrl = createPreviewUrl(file);
+  const filePath = `${parsedFileName.lectureCode}/${parsedFileName.rawDateTime}/${file.name}`;
+  const params: IGradeUploadParams = {
+    lecture: {
+      lectureCode: parsedFileName.lectureCode!,
+      student: {
+        studentCode: parsedFileName.studentCode!,
+        grade: {
+          gradeImageUrl: filePath
+        } 
+      },
+      lectureSession: {
+        sessionDate: parsedFileName.examDateTime!.split(" ")[0]
+      }
+    }
+  };
+
+  /* 성적 이미지 검증 */
+  try {
+    const validateResponse = await validateGradeImage(params);
+
+    if (validateResponse.code !== "GR-10") {
+      throw new Error(validateResponse.message);
+    }
+
+    return {
+      file,
+      ...parsedFileName,
+      params,
+      previewUrl
+    };
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      parsedFailedImages.value.push({
+        file,
+        ...parsedFileName,
+        params,
+        previewUrl,
+        errorMessage: error.response?.data?.message || "알 수 없는 오류가 발생했습니다."
+      } as IGradePreview);
+    } else {
+      parsedFailedImages.value.push({
+        file,
+        ...parsedFileName,
+        params,
+        previewUrl,
+        errorMessage: (error as Error).message
+      } as IGradePreview);
+    }
+    return null;
+  }
 };
 
 /**
@@ -105,7 +162,7 @@ const createPreviewUrl = (file: File): string => {
  * @memberof handleUpload
  */
 const clearPreviews = () => {
-  parsedImages.value.forEach(image => {
+  parsedSuccessImages.value.forEach(image => {
     URL.revokeObjectURL(image.previewUrl);
   });
 };
@@ -115,22 +172,21 @@ const clearPreviews = () => {
  * 
  * @param files - 선택된 파일 목록
  * @see clearPreviews - 기존 미리보기 정리
- * @see validateFile - 파일 유효성 검사
+ * @see validateFileName - 파일 유효성 검사
  * @see parseFileName - 파일명 파싱
  * @see createPreviewUrl - 미리보기 URL 생성
  */
-const handleFileSelect = (files: File[]) => {
+const handleFileSelect = async (files: File[]) => {
   if (!files.length) return;
   
   clearPreviews();
   
   selectedFiles.value = files;
-  parsedImages.value = files
-    .filter(validateFile)
-    .map(file => ({
-      ...parseFileName(file.name),
-      previewUrl: createPreviewUrl(file)
-    } as IGradePreview));
+  parsedSuccessImages.value = (await Promise.all(
+    files
+      .filter(validateFileName) 
+      .map(file => validateAndFilterGradeImage(file))
+    )).filter(image => image !== null) as IGradePreview[];
 };
 
 /**
@@ -139,48 +195,34 @@ const handleFileSelect = (files: File[]) => {
  * @see clearPreviews - 미리보기 정리
  */
 const handleUpload = async () => {
-  if (!selectedFiles.value?.length) return;
+  if (!parsedSuccessImages.value.length) return;
   
   try {
     isLoading.value = true;
-    const totalFiles = selectedFiles.value.length;
+    const totalCount = parsedSuccessImages.value.length;
     
-    for (let i = 0; i < totalFiles; i++) {
-      const file = selectedFiles.value[i];
-      const imageInfo = parsedImages.value[i];
+    for (let i = 0; i < totalCount; i++) {
+      const imageInfo = parsedSuccessImages.value[i];
+      try {
+        const response = await uploadGradeImage(imageInfo.file, imageInfo.params);
+        imageInfo.uploadStatus = 'success';
+        imageInfo.uploadMessage = response.message;
+      } catch (error) {
+        imageInfo.uploadStatus = 'error';
+        imageInfo.uploadMessage = error instanceof Error ? error.message : '업로드 실패';
+      }
 
-      const filePath = `${imageInfo.lectureCode}/${imageInfo.rawDateTime}/${file.name}`;
-      
-      const params: IGradeUploadParams = {
-        lecture: {
-          lectureCode: imageInfo.lectureCode,
-          student: {
-            studentCode: imageInfo.studentCode,
-            grade: {
-              gradeImageUrl: filePath
-            }
-          },
-          lectureSession: {
-            sessionDate: imageInfo.examDateTime.split(' ')[0]
-          }
-        }
-      };
-
-      await uploadGradeImage(file, params);
-
-      uploadProgress.value = ((i + 1) / totalFiles) * 100;
+      uploadProgress.value = ((i + 1) / totalCount) * 100;
     }
 
-    alert('모든 파일이 성공적으로 업로드되었습니다.');
+    const successCount = parsedSuccessImages.value.filter(img => img.uploadStatus === 'success').length;
+    alert(`${successCount}/${totalCount}개 파일이 업로드되었습니다.`);
   } catch (error) {
-    console.error('업로드 오류:', error);
+    console.error("업로드 오류:", error);
     alert(`업로드 중 오류가 발생했습니다. ${(error as Error).message}`);
   } finally {
     isLoading.value = false;
     uploadProgress.value = 0;
-    selectedFiles.value = null;
-    clearPreviews();
-    parsedImages.value = [];
   }
 };
 
@@ -201,55 +243,55 @@ onUnmounted(() => {
 });
 
 /* 검색 파라미터 */
-const searchParams = ref({
-  studentName: '',
-  lectureCode: '',
-  period: {
-    start: '',
-    end: ''
-  }
+const searchParams = ref<IGradeSearchParams>({
+  studentName: "",
+  lectureCode: "",
+  startDate: undefined,
+  endDate: undefined,
+  page: 1,
+  limit: 50
 });
 
 /* 검색 설정 */
 const searchConfig: ISearchConfig = {
   fields: [
     {
-      name: 'studentName',
-      label: '학생명',
-      type: 'text',
-      placeholder: '학생명을 입력하세요'
+      name: "studentName",
+      label: "학생명",
+      type: "text",
+      placeholder: "학생명을 입력하세요"
     },
     {
-      name: 'lectureCode',
-      label: '강의코드',
-      type: 'text',
-      placeholder: '강의코드를 입력하세요'
+      name: "lectureCode",
+      label: "강의코드",
+      type: "text",
+      placeholder: "강의코드를 입력하세요"
     },
     {
-      name: 'period',
-      label: '등록기간',
-      type: 'period'
+      name: "period",
+      label: "등록기간",
+      type: "period"
     }
   ],
   periods: [
-    { label: '오늘', value: 'today' },
-    { label: '1주일', value: 'week' },
-    { label: '1개월', value: 'month' },
-    { label: '3개월', value: '3months' },
-    { label: '6개월', value: '6months' }
+    { label: "오늘", value: "today" },
+    { label: "1주일", value: "week" },
+    { label: "1개월", value: "month" },
+    { label: "3개월", value: "3months" },
+    { label: "6개월", value: "6months" }
   ]
 };
 
 /* 테이블 정보 for DataTable.vue */
 const gradeTableInfo = ref<ITableInfo>({
-  tableName: 'grade',
-  tableComment: '성적',
+  tableName: "grade",
+  tableComment: "성적",
   columns: [
-    { name: 'lectureCode', comment: '강의코드' },
-    { name: 'studentName', comment: '학생명' },
-    { name: 'examDateTime', comment: '시험일시' },
-    { name: 'gradeImageUrl', comment: '이미지' },
-    { name: 'createdAt', comment: '등록일자' }
+    { name: "lectureCode", comment: "강의코드" },
+    { name: "studentName", comment: "학생명" },
+    { name: "examDateTime", comment: "시험일시" },
+    { name: "gradeImageUrl", comment: "이미지" },
+    { name: "createdAt", comment: "등록일자" }
   ]
 });
 
@@ -270,8 +312,8 @@ const handleSearch = async () => {
     totalCount.value = response.data.count;
     totalPages.value = Math.ceil(totalCount.value / perPage.value);
   } catch (error) {
-    console.error('Failed to fetch grades:', error);
-    alert('성적 목록 조회 중 오류가 발생했습니다.');
+    console.error("Failed to fetch grades:", error);
+    alert("성적 목록 조회 중 오류가 발생했습니다.");
   } finally {
     loading.value = false;
   }
@@ -280,12 +322,14 @@ const handleSearch = async () => {
 /* 페이지네이션 핸들러 */
 const handlePageChange = (page: number) => {
   currentPage.value = page;
+  searchParams.value.page = page;
   handleSearch();
 };
 
 const handlePerPageChange = (count: number) => {
   perPage.value = count;
-  currentPage.value = 1;
+  searchParams.value.page = 1;
+  searchParams.value.limit = count;
   handleSearch();
 };
 
@@ -299,11 +343,11 @@ const handleDelete = async (id: number) => {
   try {
     loading.value = true;
     await deleteGrade(id);
-    alert('성적이 삭제되었습니다.');
+    alert("성적이 삭제되었습니다.");
     await handleSearch();
   } catch (error) {
-    console.error('Failed to delete grade:', error);
-    alert('성적 삭제 중 오류가 발생했습니다.');
+    console.error("Failed to delete grade:", error);
+    alert("성적 삭제 중 오류가 발생했습니다.");
   } finally {
     loading.value = false;
   }
@@ -313,6 +357,13 @@ const handleDelete = async (id: number) => {
 onMounted(() => {
   handleSearch();
 });
+
+const handleReset = () => {
+  clearPreviews();
+  selectedFiles.value = null;
+  parsedSuccessImages.value = [];
+  parsedFailedImages.value = [];
+};
 </script>
 
 <template>
@@ -378,32 +429,92 @@ onMounted(() => {
     </div>
 
     <!-- 파일 미리보기 -->
-    <div v-if="parsedImages.length" class="preview-section">
-      <h3>업로드 예정 파일</h3>
-      <div class="preview-grid">
-        <div 
-          v-for="image in parsedImages" 
-          :key="image.fileName"
-          class="preview-item"
-        >
+    <div v-if="parsedSuccessImages.length || parsedFailedImages.length" class="preview-section">
+      <!-- 검증 실패 파일 -->
+      <div v-if="parsedFailedImages.length" class="preview-group">
+        <div class="preview-header">
+          <h3>검증 실패한 파일 ({{ parsedFailedImages.length }}개)</h3>
+          <span class="preview-notice error">⚠ 아래 파일들은 업로드되지 않습니다</span>
+        </div>
+        <div class="preview-grid">
           <div 
-            class="preview-image"
-            @click="openPreviewModal(image)"
+            v-for="image in parsedFailedImages"
+            :key="image.fileName"
+            class="preview-item preview-item--failed"
           >
-            <img :src="image.previewUrl" :alt="image.fileName">
-            <div class="preview-overlay">
-              <span>클릭하여 확대보기</span>
+            <div 
+              class="preview-image"
+              @click="openPreviewModal(image)"
+            >
+              <img :src="image.previewUrl" :alt="image.fileName">
+              <div class="preview-overlay">
+                <span>클릭하여 확대보기</span>
+              </div>
             </div>
-          </div>
-          <div class="preview-info">
-            <div class="info-text">
-              <p class="filename">{{ image.fileName }}</p>
-              <p class="details">
-                {{ image.lectureCode }} | {{ image.examDateTime }}
-              </p>
+            <div class="preview-info">
+              <div class="info-text">
+                <p class="filename">{{ image.fileName }}</p>
+                <p class="details">
+                  {{ image.lectureCode }} | {{ image.examDateTime }}
+                </p>
+                <p class="error-text">
+                  <span class="error-label">실패 원인:</span>
+                  {{ image.errorMessage }}
+                </p>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- 검증 성공 파일 -->
+      <div v-if="parsedSuccessImages.length" class="preview-group">
+        <div class="preview-header">
+          <h3>업로드 가능한 파일 ({{ parsedSuccessImages.length }}개)</h3>
+          <span class="preview-notice">✓ 검증이 완료된 파일만 업로드됩니다</span>
+        </div>
+        <div class="preview-grid">
+          <div 
+            v-for="image in parsedSuccessImages"
+            :key="image.fileName"
+            class="preview-item"
+            :data-status="image.uploadStatus"
+          >
+            <div 
+              class="preview-image"
+              @click="openPreviewModal(image)"
+            >
+              <img :src="image.previewUrl" :alt="image.fileName">
+              <div class="preview-overlay">
+                <span>클릭하여 확대보기</span>
+              </div>
+            </div>
+            <div class="preview-info">
+              <div class="info-text">
+                <p class="filename">{{ image.fileName }}</p>
+                <p class="details">
+                  {{ image.lectureCode }} | {{ image.examDateTime }}
+                </p>
+                <p v-if="image.uploadStatus" 
+                   :class="['status-text', image.uploadStatus]"
+                >
+                  {{ image.uploadMessage }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 초기화 버튼 -->
+      <div class="preview-actions">
+        <button 
+          class="reset-button"
+          @click="handleReset"
+          :disabled="isLoading"
+        >
+          초기화
+        </button>
       </div>
     </div>
 
@@ -467,11 +578,26 @@ onMounted(() => {
   background-color: var(--bg-color);
 }
 
+.preview-item[data-status="success"] {
+  border: 2px solid #4CAF50;
+  background-color: rgba(76, 175, 80, 0.05);
+}
+
+.preview-item[data-status="error"] {
+  border: 2px solid var(--error-color);
+  background-color: rgba(255, 0, 0, 0.05);
+}
+
+.preview-item--failed {
+  border: 2px solid var(--error-color);
+  background-color: rgba(255, 0, 0, 0.05);
+}
+
 .preview-image {
   width: 100%;
   height: 200px;
   overflow: hidden;
-  background-color: #f5f5f5;
+  background-color: inherit;
   position: relative;
   cursor: pointer;
 }
@@ -527,6 +653,18 @@ onMounted(() => {
   color: var(--text-secondary);
 }
 
+.error-text {
+  color: var(--error-color);
+  margin: 5px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.error-label {
+  font-weight: bold;
+  margin-right: 4px;
+}
+
 button {
   padding: 8px 16px;
   background-color: #000;
@@ -545,5 +683,71 @@ button:disabled {
   background-color: var(--divider-color);
   margin: 2rem 0;
   width: 100%;
+}
+
+.preview-group {
+  margin-bottom: 2rem;
+}
+
+.preview-group:last-child {
+  margin-bottom: 0;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.preview-notice {
+  font-size: 0.9rem;
+  color: #4CAF50;
+}
+
+.preview-notice.error {
+  color: var(--error-color);
+}
+
+.status-text {
+  margin: 5px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.status-text.success {
+  color: #4CAF50;
+}
+
+.status-text.error {
+  color: var(--error-color);
+}
+
+.preview-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.reset-button {
+  padding: 8px 24px;
+  background-color: transparent;
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.reset-button:hover:not(:disabled) {
+  background-color: var(--bg-hover);
+  border-color: var(--text-color);
+}
+
+.reset-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style> 

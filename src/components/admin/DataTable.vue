@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import Checkbox from '../common/Checkbox.vue'
-import type { ISchool } from '../../types/school'
+import { ref, computed } from "vue";
+import Checkbox from "../common/Checkbox.vue";
+import type { ISchool } from "../../types/school";
 import type { ITableInfo } from "../../types/common/common.ts";
+import { useRouter } from "vue-router";
 
 const props = defineProps<{
   data: any[];
@@ -12,47 +13,97 @@ const props = defineProps<{
   currentPage?: number;
   perPage?: number;
   perPageOptions?: number[];
-}>()
+  detailRoute?: string;
+}>();
 
 const emit = defineEmits<{
-  (e: 'update', id: number, data: any): void;
-  (e: 'delete', id: number): void;
-  (e: 'select', items: string[]): void;
-  (e: 'update:currentPage', page: number): void;
-  (e: 'update:perPage', count: number): void;
-}>()
+  (e: "update", id: number, data: any): void;
+  (e: "delete", id: number): void;
+  (e: "select", items: string[]): void;
+  (e: "update:currentPage", page: number): void;
+  (e: "update:perPage", count: number): void;
+}>();
 
-const selectedItems = ref<string[]>([])
+const selectedItems = ref<string[]>([]);
 
 const allSelected = computed({
   get: () => {
-    return props.data.length > 0 && selectedItems.value.length === props.data.length
+    return props.data.length > 0 && selectedItems.value.length === props.data.length;
   },
   set: (value: boolean) => {
     selectedItems.value = value
         ? props.data.map(item => item.id.toString())
-        : []
+        : [];
   }
-})
+});
+
+const parsedData = (field: string | string[], item: any) => {
+  // 단일 필드 처리
+  if (typeof field === "string") {
+    return item[field];
+  }
+
+  // 중첩 필드 처리 
+  const getValue = (obj: any, keys: string[]): any => {
+    if (!obj) return undefined;
+
+    const [currentKey, ...remainingKeys] = keys;
+    const currentValue = obj[currentKey];
+
+    // 마지막 키인 경우 현재 값 반환
+    if (remainingKeys.length === 0) {
+      return currentValue;
+    }
+
+    // 배열인 경우 각 요소에 대해 재귀 처리
+    if (Array.isArray(currentValue)) {
+      return currentValue.flatMap(item => getValue(item, remainingKeys));
+    }
+
+    // 객체인 경우 다음 키로 재귀 처리
+    return getValue(currentValue, remainingKeys);
+  };
+
+  const result = getValue(item, field);
+
+  /* 만약 result가 url이라면 링크로 변환 && 클릭 시 링크로 이동 */
+  if (typeof result === "string" && result.startsWith("http")) {
+    return `<a href="${result}" target="_blank">${result}</a>`;
+  }
+
+  /* 배열인 경우 쉼표로 구분 */
+  return Array.isArray(result) ? result.join(", ") : result;
+};
 
 const toggleSelectAll = () => {
-  emit('select', selectedItems.value)
-}
+  emit("select", selectedItems.value);
+};
 
 const handleEdit = (item: ISchool) => {
-  emit('update', item.id, item)
-}
+  emit("update", item.id, item);
+};
 
 const handleDelete = (item: ISchool) => {
-  if (confirm('정말 삭제하시겠습니까?')) {
-    emit('delete', item.id)
+  if (confirm("정말 삭제하시겠습니까?")) {
+    emit("delete", item.id);
   }
-}
+};
 
 const totalPages = computed(() => {
   if (!props.totalCount || !props.perPage) return 1;
   return Math.ceil(props.totalCount / props.perPage);
 });
+
+const router = useRouter();
+
+const handleRowClick = (item: any) => {
+  if (props.detailRoute) {
+    router.push({
+      name: props.detailRoute,
+      params: { id: item.id }
+    });
+  }
+};
 
 </script>
 
@@ -88,7 +139,7 @@ const totalPages = computed(() => {
               @change="toggleSelectAll"
           />
         </th>
-        <th v-for="column in tableInfo.columns" :key="column.name">
+        <th v-for="column in tableInfo.columns" :key="column.comment">
           {{ column.comment }}
         </th>
         <th></th>
@@ -101,19 +152,25 @@ const totalPages = computed(() => {
         </td>
       </tr>
       <tr v-else-if="data.length === 0">
-        <td colspan="7" class="no-data">
+        <td :colspan="tableInfo.columns.length + 2" class="no-data">
           데이터가 없습니다
         </td>
       </tr>
-      <tr v-else v-for="item in data" :key="item.id">
+      <tr 
+        v-else 
+        v-for="item in data" 
+        :key="item.id"
+        :class="{ clickable: detailRoute }"
+        @click="handleRowClick(item)"
+      >
         <td>
           <Checkbox
               v-model="selectedItems"
               :value="item.id.toString()"
           />
         </td>
-        <td v-for="field in tableInfo.columns" :key="field.name">
-          {{ item[field.name] }}
+        <td v-for="field in tableInfo.columns" :key="field.comment">
+          {{ parsedData(field.name, item) }}
         </td>
         <td>
           <div class="action-buttons">
@@ -277,5 +334,13 @@ const totalPages = computed(() => {
 .pagination button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover {
+  background-color: var(--bg-hover);
 }
 </style>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import type { IGradeResponse } from '../types/grade';
+import { ref } from "vue";
+import type { IGradeResponse } from "../types/grade";
 
 defineProps<{
   grade: IGradeResponse;

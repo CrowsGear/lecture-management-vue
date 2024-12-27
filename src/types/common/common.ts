@@ -5,9 +5,13 @@ export interface ITableInfo {
     columns: IColumnInfo[];
 }
 
-/* 테이블 컬럼 정보 */
+/* 테이블 컬럼 정보 
+* name: 컬럼명 (string | string[]) - 중첩 컬럼일 경우 배열로 표현 
+* ex. ['lectureStudents', 'lecture', 'lectureCode'] => data.lectureStudents.lecture.lectureCode
+* 
+*/
 export interface IColumnInfo {
-    name: string;
+    name: string | string[];
     comment: string;
     type?: string;
 }
@@ -16,7 +20,7 @@ export interface IColumnInfo {
 export interface ISearchField {
   name: string;          // 필드 이름
   label: string;         // 화면에 표시될 라벨
-  type: 'text' | 'date' | 'select' | 'period';  // 입력 타입
+  type: "text" | "date" | "select" | "period";  // 입력 타입
   placeholder?: string;  // placeholder 텍스트
   options?: {           // select 타입일 경우의 옵션들
     label: string;

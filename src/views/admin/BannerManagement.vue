@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import axios from '../../utils/axios';
-import type { IBanner, IPreSignedUrl } from '../../types/banner';
+import { ref, onMounted } from "vue";
+import axios from "../../utils/axios";
+import type { IBanner, IPreSignedUrl } from "../../types/banner";
 
 const isLoading = ref(false);
 const banners = ref<IBanner[]>([]);
 const selectedFile = ref<File | null>(null);
-const selectedPosition = ref<'top' | 'bottom'>('top');
+const selectedPosition = ref<"top" | "bottom">("top");
 
 // 배너 목록 조회
 const fetchBanners = async () => {
   try {
-    const response = await axios.get('/banners');
+    const response = await axios.get("/banners");
     banners.value = response.data;
   } catch (error) {
-    console.error('배너 목록 조회 실패:', error);
-    alert('배너 목록을 불러오는데 실패했습니다.');
+    console.error("배너 목록 조회 실패:", error);
+    alert("배너 목록을 불러오는데 실패했습니다.");
   }
 };
 
@@ -32,17 +32,17 @@ const handleFileSelect = (event: Event) => {
 
 // 파일 유효성 검사
 const validateFile = (file: File): boolean => {
-  const validExtensions = ['jpg', 'jpeg', 'png'];
-  const extension = file.name.split('.').pop()?.toLowerCase() || '';
+  const validExtensions = ["jpg", "jpeg", "png"];
+  const extension = file.name.split(".").pop()?.toLowerCase() || "";
   
   if (!validExtensions.includes(extension)) {
-    alert('이미지 파일만 업로드 가능합니다.');
+    alert("이미지 파일만 업로드 가능합니다.");
     return false;
   }
   
   // 파일 크기 제한 (예: 5MB)
   if (file.size > 5 * 1024 * 1024) {
-    alert('파일 크기는 5MB 이하여야 합니다.');
+    alert("파일 크기는 5MB 이하여야 합니다.");
     return false;
   }
 
@@ -52,10 +52,10 @@ const validateFile = (file: File): boolean => {
 // Pre-signed URL 요청
 const getPreSignedUrl = async (fileName: string): Promise<IPreSignedUrl> => {
   try {
-    const response = await axios.post('/banners/presigned-url', { fileName });
+    const response = await axios.post("/banners/presigned-url", { fileName });
     return response.data;
   } catch (error) {
-    console.error('Pre-signed URL 요청 오류:', error);
+    console.error("Pre-signed URL 요청 오류:", error);
     throw error;
   }
 };
@@ -66,14 +66,14 @@ const uploadToS3 = async (file: File, preSignedData: IPreSignedUrl): Promise<str
   Object.entries(preSignedData.fields).forEach(([key, value]) => {
     formData.append(key, value);
   });
-  formData.append('file', file);
+  formData.append("file", file);
 
   const response = await fetch(preSignedData.url, {
-    method: 'POST',
+    method: "POST",
     body: formData
   });
 
-  if (!response.ok) throw new Error('S3 업로드 실패');
+  if (!response.ok) throw new Error("S3 업로드 실패");
   return `${preSignedData.url}/${preSignedData.fields.key}`;
 };
 
@@ -91,17 +91,17 @@ const handleUpload = async () => {
     const imageUrl = await uploadToS3(selectedFile.value, preSignedData);
     
     // DB 저장
-    await axios.post('/banners', {
+    await axios.post("/banners", {
       position: selectedPosition.value,
       imageUrl,
       isActive: true
     });
 
-    alert('배너가 성공적으로 업로드되었습니다.');
+    alert("배너가 성공적으로 업로드되었습니다.");
     await fetchBanners();
   } catch (error) {
-    console.error('배너 업로드 오류:', error);
-    alert('배너 업로드 중 오류가 발생했습니다.');
+    console.error("배너 업로드 오류:", error);
+    alert("배너 업로드 중 오류가 발생했습니다.");
   } finally {
     isLoading.value = false;
     selectedFile.value = null;
@@ -116,22 +116,22 @@ const toggleBannerStatus = async (banner: IBanner) => {
     });
     await fetchBanners();
   } catch (error) {
-    console.error('배너 상태 변경 실패:', error);
-    alert('배너 상태 변경에 실패했습니다.');
+    console.error("배너 상태 변경 실패:", error);
+    alert("배너 상태 변경에 실패했습니다.");
   }
 };
 
 // 배너 삭제
 const deleteBanner = async (bannerId: number) => {
-  if (!confirm('정말 삭제하시겠습니까?')) return;
+  if (!confirm("정말 삭제하시겠습니까?")) return;
   
   try {
     await axios.delete(`/banners/${bannerId}`);
     await fetchBanners();
-    alert('배너가 삭제되었습니다.');
+    alert("배너가 삭제되었습니다.");
   } catch (error) {
-    console.error('배너 삭제 실패:', error);
-    alert('배너 삭제에 실패했습니다.');
+    console.error("배너 삭제 실패:", error);
+    alert("배너 삭제에 실패했습니다.");
   }
 };
 

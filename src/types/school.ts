@@ -1,12 +1,12 @@
-import type { ISearchParams } from './common/searchParams';
+import type { ISearchParams } from "./common/searchParams";
 
 export interface ISchool {
     id: number;
     schoolName: string;
     createdAt: string;
     updatedAt: string;
-    deletedAt?: string;
-    [key: string]: string | number | undefined;
+    deletedAt?: string | null;
+    [key: string]: string | number | undefined | null;
 }
 
 export interface ISchoolSearchParams extends ISearchParams {

@@ -1,15 +1,15 @@
-import { RouteRecordRaw } from 'vue-router';
-import GradeViewLayout from '../../layouts/GradeViewLayout.vue';
+import { RouteRecordRaw } from "vue-router";
+import GradeViewLayout from "../../layouts/GradeViewLayout.vue";
 
 
 const gradesRoutes: RouteRecordRaw[] = [
     {
-        path: '/grades',
+        path: "/grades",
         component: GradeViewLayout,
         children: [
             {
-                path: '',
-                component: () => import('../../views/GradeView.vue'),
+                path: "",
+                component: () => import("../../views/GradeView.vue"),
             }
         ],
     }

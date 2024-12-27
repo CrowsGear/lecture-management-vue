@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { ITableHeader } from '../../types/common/common';
+import { computed } from "vue";
+import type { ITableHeader } from "../../types/common/common";
 
 const props = defineProps<{
   /* 테이블 헤더 정보 */
@@ -23,7 +23,7 @@ const getRowKey = (item: any) => {
 
 /* 전체 데이터 수 표시 텍스트 */
 const totalCountText = computed(() => {
-  if (typeof props.totalCount === 'number') {
+  if (typeof props.totalCount === "number") {
     return `총 ${props.totalCount}건`;
   }
   return `총 ${props.items.length}건`;

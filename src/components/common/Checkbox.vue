@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed } from "vue";
 
 const props = withDefaults(defineProps<{
 
@@ -13,41 +13,41 @@ const props = withDefaults(defineProps<{
   disabled?: boolean;
 
 }>(), {
-  value: '',
+  value: "",
   disabled: false
-})
+});
 
 const emit = defineEmits<{
   /* update:modelValue 이벤트를 발생시키는 함수 */
-  (e: 'update:modelValue', value: boolean | string[]): void;
-}>()
+  (e: "update:modelValue", value: boolean | string[]): void;
+}>();
 
 const handleChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
+  const target = event.target as HTMLInputElement;
 
   if (Array.isArray(props.modelValue)) {
-    const newValue = [...props.modelValue]
+    const newValue = [...props.modelValue];
     if (target.checked) {
-      newValue.push(props.value)
+      newValue.push(props.value);
     } else {
-      const index = newValue.indexOf(props.value)
+      const index = newValue.indexOf(props.value);
       if (index > -1) {
-        newValue.splice(index, 1)
+        newValue.splice(index, 1);
       }
     }
-    emit('update:modelValue', newValue)
+    emit("update:modelValue", newValue);
   } else {
-    emit('update:modelValue', target.checked)
+    emit("update:modelValue", target.checked);
   }
-}
+};
 
 const checked = computed(() => {
   if (Array.isArray(props.modelValue)) {
-    return props.modelValue.includes(props.value)
+    return props.modelValue.includes(props.value);
   } else {
-    return props.modelValue
+    return props.modelValue;
   }
-})
+});
 </script>
 
 <template>

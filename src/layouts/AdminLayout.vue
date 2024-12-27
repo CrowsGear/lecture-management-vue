@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { useAuthStore } from '../stores/auth';
-import { useRouter } from 'vue-router';
+import { onMounted } from "vue";
+import { useAuthStore } from "../stores/auth";
+import { useRouter } from "vue-router";
 
 const authStore = useAuthStore();
 const router = useRouter();
 onMounted(() => {
   if (!authStore.isAuthenticated) {
-    alert('로그인 후 이용해주세요.');
-    router.push('/');
+    alert("로그인 후 이용해주세요.");
+    router.push("/");
     return;
   }
-  if (authStore.authType !== '0') {
-    alert('관리자 권한이 필요합니다.');
-    router.push('/');
+  if (authStore.authType !== "0") {
+    alert("관리자 권한이 필요합니다.");
+    router.push("/");
     return;
   }
 

@@ -1,6 +1,6 @@
-import axios from '../utils/axios';
-import type { ITeacher, ITeacherSearchParams } from '../types/teacher';
-import type { IResponse } from '../types/common/response';
+import axios from "../utils/axios";
+import type { ITeacher, ITeacherSearchParams } from "../types/teacher";
+import type { IResponse } from "../types/common/response";
 
 /**
  * 강사 목록 조회
@@ -9,10 +9,10 @@ import type { IResponse } from '../types/common/response';
  */
 export const fetchTeachers = async (searchParams?: ITeacherSearchParams): Promise<IResponse> => {
   try {
-    const response = await axios.get('/teachers', { params: searchParams });
+    const response = await axios.get("/teachers", { params: searchParams });
     return response.data;
   } catch (error) {
-    console.error('Failed to fetch teachers:', error);
+    console.error("Failed to fetch teachers:", error);
     throw error;
   }
 };
@@ -23,10 +23,10 @@ export const fetchTeachers = async (searchParams?: ITeacherSearchParams): Promis
  */
 export const createTeacher = async (teacherData: Partial<ITeacher>): Promise<IResponse> => {
   try {
-    const response = await axios.post('/teachers', teacherData);
+    const response = await axios.post("/teachers", teacherData);
     return response.data;
   } catch (error) {
-    console.error('Failed to create teacher:', error);
+    console.error("Failed to create teacher:", error);
     throw error;
   }
 };
@@ -41,7 +41,7 @@ export const updateTeacher = async (id: number, teacherData: Partial<ITeacher>):
     const response = await axios.put(`/teachers/${id}`, teacherData);
     return response.data;
   } catch (error) {
-    console.error('Failed to update teacher:', error);
+    console.error("Failed to update teacher:", error);
     throw error;
   }
 };
@@ -55,7 +55,7 @@ export const deleteTeacher = async (id: number): Promise<IResponse> => {
     const response = await axios.delete(`/teachers/${id}`);
     return response.data;
   } catch (error) {
-    console.error('Failed to delete teacher:', error);
+    console.error("Failed to delete teacher:", error);
     throw error;
   }
 }; 

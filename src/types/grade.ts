@@ -1,7 +1,8 @@
-import type { ILectureSession } from './lecture';
-import type { ISearchParams } from './common/searchParams';
+import type { ILectureSession } from "./lecture";
+import type { ISearchParams } from "./common/searchParams";
 
 export interface IGradeImage {
+  file: File;
   fileName: string;
   rawDateTime: string;
   gradeImageUrl: string;
@@ -16,6 +17,10 @@ export interface IPreSignedUrl {
 
 export interface IGradePreview extends IGradeImage {
   previewUrl: string;
+  params: IGradeUploadParams;
+  errorMessage?: string;
+  uploadStatus?: 'success' | 'error';
+  uploadMessage?: string;
 }
 
 export interface IGradeUploadParams {
@@ -35,7 +40,7 @@ export interface IGradeUploadParams {
 
 export interface IGradeSearchParams extends ISearchParams {
   studentName?: string;
-  schoolName?: string;
+  lectureCode?: string;
 }
 
 export interface IGradeResponse {

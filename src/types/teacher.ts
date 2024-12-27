@@ -1,4 +1,4 @@
-import type { ISearchParams } from './common/searchParams';
+import type { ISearchParams } from "./common/searchParams";
 
 export interface ITeacher {
   id: number;
@@ -8,6 +8,10 @@ export interface ITeacher {
   createdAt?: string;
   updatedAt?: string;
   deletedAt?: string;
+}
+
+export interface ITeacherExcelData {
+  teacherName: string;
 }
 
 export interface ITeacherSearchParams extends ISearchParams {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import DatePicker from '../common/DatePicker.vue'
-import type { ISearchConfig, ISearchParams } from '../../types/common/common'
+import { ref, watch } from "vue";
+import DatePicker from "../common/DatePicker.vue";
+import type { ISearchConfig, ISearchParams } from "../../types/common/common";
 
 /* 컴포넌트 속성 */
 const props = defineProps<{
@@ -10,64 +10,64 @@ const props = defineProps<{
 
   /* 검색 파라미터 */
   searchParams: ISearchParams;
-}>()
+}>();
 
 /* 컴포넌트 이벤트 */
 const emit = defineEmits<{
   /* 검색 파라미터 업데이트 */
-  (e: 'update:searchParams', value: ISearchParams): void;
+  (e: "update:searchParams", value: ISearchParams): void;
 
   /* 검색 함수 */
-  (e: 'search'): void;
-}>()
+  (e: "search"): void;
+}>();
 
 
 /* 검색 파라미터 */
-const localParams = ref({ ...props.searchParams })
+const localParams = ref({ ...props.searchParams });
 
 /* 선택된 기간 */
-const selectedPeriod = ref('')
+const selectedPeriod = ref("");
 
 /* 검색 파라미터 업데이트 */
 watch(() => props.searchParams, (newVal) => {
-  localParams.value = { ...newVal }
-}, { deep: true })
+  localParams.value = { ...newVal };
+}, { deep: true });
 
 /* 기간 설정 */
 const setPeriod = (period: string) => {
-  selectedPeriod.value = period
+  selectedPeriod.value = period;
   // 기간 설정 로직 구현
   // TODO: 선택된 기간에 따라 start, end 날짜 계산
-}
+};
 
 /* 검색 조건 초기화 */
 const resetForm = () => {
   localParams.value = Object.keys(localParams.value).reduce((acc, key) => {
-    if (typeof localParams.value[key] === 'object' && localParams.value[key] !== null) {
-      acc[key] = { ...localParams.value[key] }
+    if (typeof localParams.value[key] === "object" && localParams.value[key] !== null) {
+      acc[key] = { ...localParams.value[key] };
       Object.keys(acc[key]).forEach(subKey => {
-        acc[key][subKey] = ''
-      })
+        acc[key][subKey] = "";
+      });
     } else {
-      acc[key] = ''
+      acc[key] = "";
     }
-    return acc
-  }, {} as ISearchParams)
-}
+    return acc;
+  }, {} as ISearchParams);
+};
 
 /* 검색 함수 */
 const emitSearch = () => {
-  emit('update:searchParams', localParams.value)
-  emit('search')
-}
+  emit("update:searchParams", localParams.value);
+  emit("search");
+};
 
 /**
  * Enter 키 입력 핸들러
  * @param event - 키보드 이벤트
  */
 const handleKeyPress = (event: KeyboardEvent) => {
-  if (event.key === 'Enter') {
-    emit('search');
+  if (event.key === "Enter") {
+    emit("search");
   }
 };
 </script>
@@ -120,9 +120,9 @@ const handleKeyPress = (event: KeyboardEvent) => {
         >
           {{ period.label }}
         </button>
-        <DatePicker v-model="localParams[field.name].start" />
+        <DatePicker v-model="localParams.startDate" />
         <span>~</span>
-        <DatePicker v-model="localParams[field.name].end" />
+        <DatePicker v-model="localParams.endDate" />
       </div>
     </div>
 

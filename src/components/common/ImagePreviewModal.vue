@@ -10,11 +10,11 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'close'): void;
+  (e: "close"): void;
 }>();
 
 const handleClose = () => {
-  emit('close');
+  emit("close");
 };
 </script>
 
