@@ -6,8 +6,13 @@
   "scripts": {
     "dev": "vite",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
-    "build": "vue-tsc -b && vite build",
-    "build:docker": ". script/build.sh",
+    "build:dev": "vue-tsc -b && vite build --mode dev",
+    "build:kjm0703": "vue-tsc -b && vite build --mode kjm0703",
+    "build:kjs0928": "vue-tsc -b && vite build --mode kjs0928",
+    "build:docker:dev": ". script/build.sh dev",
+    "build:docker:kjm0703": ". script/build.sh kjm0703",
+    "build:docker:kjs0928": ". script/build.sh kjs0928",
+    "build:docker:all": ". script/build-all.sh",
     "preview": "vite preview"
   },
   "dependencies": {

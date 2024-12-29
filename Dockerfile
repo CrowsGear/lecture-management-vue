@@ -1,6 +1,8 @@
 # Build
 FROM node:18.20.5 AS build-stage
 
+ARG MODE=dev
+
 # Workdirectory 설정
 WORKDIR /app
 
@@ -15,7 +17,7 @@ RUN yarn install
 COPY . .
 
 # 빌드
-RUN yarn build
+RUN yarn build:${MODE}
 
 
 # Production(nginx)
