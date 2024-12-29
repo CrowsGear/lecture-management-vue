@@ -19,8 +19,8 @@ const form = ref<ILoginForm>({
   password: ""
 });
 
-const bannerTop = ref<string>("/src/assets/daily_report_top_only_kjs0928.jpeg");
-const bannerBottom = ref<string>("");
+const bannerTop = ref<string>(import.meta.env.VITE_BANNER_TOP_URL);
+const bannerBottom = ref<string>(import.meta.env.VITE_BANNER_BOTTOM_URL);
 
 const errors = ref({
   phone: "",
@@ -103,7 +103,7 @@ const handleLogin = async (): Promise<void> => {
   <div class="login-container">
     <!-- 상단 배너 이미지 -->
     <div v-if="bannerTop" class="banner banner-top">
-      <img src="../assets/daily_report_top_only_kjs0928.jpeg" alt="상단 배너" />
+      <img :src="bannerTop" alt="상단 배너" />
     </div>
 
     <!-- 로그인 폼 -->
