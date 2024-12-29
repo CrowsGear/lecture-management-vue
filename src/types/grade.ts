@@ -19,7 +19,7 @@ export interface IGradePreview extends IGradeImage {
   previewUrl: string;
   params: IGradeUploadParams;
   errorMessage?: string;
-  uploadStatus?: 'success' | 'error';
+  uploadStatus?: "success" | "error";
   uploadMessage?: string;
 }
 
