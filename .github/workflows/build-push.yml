@@ -16,8 +16,11 @@ jobs:
         with:
           node-version: "18.20.5"
 
-      # - name: install yarn
-      #   run: npm install -g yarn
+      - name: Create environment files
+        run: |
+          echo "${{ secrets.ENV_DEV }}" > .env.dev
+          echo "${{ secrets.ENV_KJM }}" > .env.kjm0703
+          echo "${{ secrets.ENV_KJS }}" > .env.kjs0928
 
       - name: install dependencies
         run: yarn install
