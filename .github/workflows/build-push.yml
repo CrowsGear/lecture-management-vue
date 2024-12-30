@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-22.04
+    runs-on: Linux-ARM64-runner
 
     steps:
       - uses: actions/checkout@v3
