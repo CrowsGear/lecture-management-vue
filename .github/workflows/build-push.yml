@@ -33,3 +33,11 @@ jobs:
 
       - name: Build and Push Docker image
         run: ./script/build-all.sh
+
+      - name: Execute start.sh on EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: cd &HOME && chmod +x start.sh && ./start.sh
