@@ -207,7 +207,7 @@ const handlePerPageChange = (count: number) => {
         </td>
         <td 
           v-for="column in tableInfo.columns" 
-          :key="column.name"
+          :key="Array.isArray(column.name) ? column.name.join('.') : column.name"
           v-html="parsedData(column.name, item)"
         >
         </td>
