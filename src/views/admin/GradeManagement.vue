@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /* Third Party */ 
 import { AxiosError } from "axios";
-import { ref, onUnmounted, onMounted } from "vue";
+import { ref, onUnmounted, onMounted, computed } from "vue";
 
 /* Components */
 import SearchForm from "../../components/admin/SearchForm.vue";
@@ -10,7 +10,7 @@ import FileDropZone from "../../components/common/FileDropZone.vue";
 import ImagePreviewModal from "../../components/common/ImagePreviewModal.vue";
 
 /* Types */
-import type { IGradeImage, IGradeSearchParams, IGradePreview, IGradeUploadParams } from "../../types/grade";
+import type { IGrade, IGradeImage, IGradeSearchParams, IGradePreview, IGradeUploadParams } from "../../types/grade";
 import type { ISearchConfig } from "../../types/common/common";
 import type { ITableInfo } from "../../types/common/common";
 
@@ -38,7 +38,10 @@ const parsedSuccessImages = ref<IGradePreview[]>([]);
 const parsedFailedImages = ref<IGradePreview[]>([]);
 
 /* REFS for DataTable.vue */
-const gradeData = ref<IGradeImage[]>([]);
+const gradeData = ref<IGrade[]>([]);
+const failedSmsData = computed(() => {
+  return gradeData.value.filter(item => item.smsStatus !== 1);
+});
 const loading = ref(false);
 const totalCount = ref(0);
 const currentPage = ref(1);
@@ -58,7 +61,8 @@ const openPreviewModal = (image: IGradePreview) => {
 };
 
 /* REFS for Toggle */
-const isTableExpanded = ref(false);
+const isFailedSmsExpanded = ref(true);  // SMS 발송 실패 섹션 토글 상태
+const isAllListExpanded = ref(false);    // 전체 목록 섹션 토글 상태
 
 /* 파일 처리 관련 함수들 */
 /**
@@ -101,20 +105,22 @@ const validateFileName = (file: File): boolean => {
  */
 const parseFileName = (fileName: string): Partial<IGradeImage> => {
 
+  const fileNameWithoutExtension = fileName.split(".")[0];
+
   let lectureCode: string = "";
   let rawDateTime: string = "";
   let studentCode: string = "";
   
   // 파일명 형식1 의 경우
   if (FILE_NAME_PATTERN_1.test(fileName)) {
-    [lectureCode, rawDateTime, studentCode] = fileName.split(".")[0].split("_");
+    [lectureCode, rawDateTime, studentCode] = fileNameWithoutExtension.split("_");
   }
 
   // 파일명 형식2 의 경우: CUSTOM학번은 무시.
   if (FILE_NAME_PATTERN_2.test(fileName)) {
-    lectureCode = fileName.split("_")[0];
-    rawDateTime = fileName.split("_")[1];
-    studentCode = fileName.split("_")[3];
+    lectureCode = fileNameWithoutExtension.split("_")[0];
+    rawDateTime = fileNameWithoutExtension.split("_")[1];
+    studentCode = fileNameWithoutExtension.split("_")[3];
   }
 
   // 강의코드 길이 검증
@@ -348,12 +354,19 @@ const gradeTableInfo = ref<ITableInfo>({
   ]
 });
 
+/* SMS 발송 실패 테이블 정보 */
+const failedSmsTableInfo = ref<ITableInfo>({
+  ...gradeTableInfo.value,
+  tableComment: "SMS 발송 실패 목록"
+});
+
 /* 검색 핸들러 */
 const handleSearch = async () => {
   try {
     loading.value = true;
     const response = await fetchGrades(searchParams.value);
     gradeData.value = response.data.items;
+    console.log("gradeData", gradeData.value);
     totalCount.value = response.data.count;
     totalPages.value = Math.ceil(totalCount.value / perPage.value);
   } catch (error) {
@@ -414,11 +427,19 @@ onUnmounted(() => {
   clearPreviews();
 });
 
+/* Toggle Handlers */
 /**
- * 테이블 토글 핸들러
+ * SMS 발송 실패 섹션 토글
  */
-const toggleTable = () => {
-  isTableExpanded.value = !isTableExpanded.value;
+const toggleFailedSms = () => {
+  isFailedSmsExpanded.value = !isFailedSmsExpanded.value;
+};
+
+/**
+ * 전체 목록 섹션 토글
+ */
+const toggleAllList = () => {
+  isAllListExpanded.value = !isAllListExpanded.value;
 };
 </script>
 
@@ -434,33 +455,53 @@ const toggleTable = () => {
     />
     <div class="section-divider"></div>
 
-    <!-- 목록 영역 -->
-    <div class="table-section">
+    <!-- SMS 발송 실패 목록 -->
+    <div v-if="failedSmsData.length > 0" class="sms-failed-section">
       <div 
-        class="table-header" 
-        @click="toggleTable"
+        class="section-header error clickable" 
+        @click="toggleFailedSms"
       >
-        <h3>성적 목록 (총 {{ totalCount }}건)</h3>
+        <h3>SMS 발송 실패 ({{ failedSmsData.length }}건)</h3>
         <span class="toggle-icon">
-          {{ isTableExpanded ? "▼" : "▶" }}
+          {{ isFailedSmsExpanded ? "▼" : "▶" }}
         </span>
       </div>
-      <div v-show="isTableExpanded" class="table-content">
+      <div v-show="isFailedSmsExpanded">
         <DataTable
-          :data="gradeData"
-          :table-info="gradeTableInfo"
+          :data="failedSmsData"
+          :table-info="failedSmsTableInfo"
           :loading="loading"
-          :total-count="totalCount"
-          :current-page="currentPage"
-          :per-page="perPage"
-          :total-pages="totalPages"
-          :per-page-options="perPageOptions"
-          @update="handleUpdate"
-          @delete="handleDelete"
-          @update:current-page="handlePageChange"
-          @update:per-page="handlePerPageChange"
         />
       </div>
+    </div>
+    
+    <div v-if="failedSmsData.length > 0" class="section-divider"></div>
+
+    <!-- 목록 영역 -->
+    <div 
+      class="section-header clickable"
+      @click="toggleAllList"
+    >
+      <h3>전체 목록 ({{ totalCount }}건)</h3>
+      <span class="toggle-icon">
+        {{ isAllListExpanded ? "▼" : "▶" }}
+      </span>
+    </div>
+    <div v-show="isAllListExpanded">
+      <DataTable
+        :data="gradeData"
+        :table-info="gradeTableInfo"
+        :loading="loading"
+        :total-count="totalCount"
+        :current-page="currentPage"
+        :per-page="perPage"
+        :total-pages="totalPages"
+        :per-page-options="perPageOptions"
+        @update="handleUpdate"
+        @delete="handleDelete"
+        @update:current-page="handlePageChange"
+        @update:per-page="handlePerPageChange"
+      />
     </div>
 
     <div class="section-divider"></div>
@@ -854,5 +895,54 @@ button:disabled {
 
 .table-content {
   margin-top: 1rem;
+}
+
+.sms-failed-section {
+  margin-bottom: 2rem;
+  border: 1px solid var(--error-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.section-header {
+  padding: 1rem;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.section-header.error {
+  background-color: rgba(255, 0, 0, 0.05);
+  border-bottom: 1px solid var(--error-color);
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--text-color);
+}
+
+.section-header.error h3 {
+  color: var(--error-color);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-header.clickable {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.section-header.clickable:hover {
+  background-color: var(--bg-hover);
+}
+
+.toggle-icon {
+  font-size: 1rem;
+  color: var(--text-secondary);
 }
 </style> 
