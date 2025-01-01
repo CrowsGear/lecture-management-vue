@@ -30,14 +30,23 @@ const FILE_NAME_PATTERN_1 = /^[A-Za-z0-9-_]{1,15}_\d{10}_ST\d{10}\.(jpg|jpeg|png
  */
 const FILE_NAME_PATTERN_2 = /^[A-Za-z0-9-_]{1,15}_\d{10}_[A-Za-z0-9-_]{1,15}_ST\d{10}\.(jpg|jpeg|png)$/i;
 
-/* REFS */
+/* REFS for Upload */
 const isLoading = ref(false);
 const uploadProgress = ref(0);
 const selectedFiles = ref<File[] | null>(null);
 const parsedSuccessImages = ref<IGradePreview[]>([]);
 const parsedFailedImages = ref<IGradePreview[]>([]);
 
-/* 이미지 미리보기 모달 관련 */
+/* REFS for DataTable.vue */
+const gradeData = ref<IGradeImage[]>([]);
+const loading = ref(false);
+const totalCount = ref(0);
+const currentPage = ref(1);
+const perPage = ref(10);
+const perPageOptions = ref([10, 25, 50, 100]);
+const totalPages = ref(1);
+
+/* REFS for Image Preview Modal */
 const showPreviewModal = ref(false);
 const selectedPreviewUrl = ref("");
 const selectedFileName = ref("");
@@ -47,6 +56,9 @@ const openPreviewModal = (image: IGradePreview) => {
   selectedFileName.value = image.fileName;
   showPreviewModal.value = true;
 };
+
+/* REFS for Toggle */
+const isTableExpanded = ref(false);
 
 /* 파일 처리 관련 함수들 */
 /**
@@ -289,7 +301,7 @@ const searchParams = ref<IGradeSearchParams>({
   startDate: undefined,
   endDate: undefined,
   page: 1,
-  limit: 50
+  limit: perPage.value
 });
 
 /* 검색 설정 */
@@ -330,19 +342,11 @@ const gradeTableInfo = ref<ITableInfo>({
     { name: ["lectureSession", "lecture", "title"], comment: "강의명"},
     { name: ["lectureSession", "lecture", "lectureCode"], comment: "강의코드" },
     { name: ["student", "studentName"], comment: "학생명" },
-    { name: "examDateTime", comment: "시험일시" },
     { name: "gradeImageUrl", comment: "이미지" },
-    { name: "createdAt", comment: "등록일자" }
+    { name: "createdAt", comment: "등록일자" },
+    { name: "smsStatus", comment: "SMS 발송 여부" }
   ]
 });
-
-/* 목록 데이터 for DataTable.vue */
-const gradeData = ref<IGradeImage[]>([]);
-const loading = ref(false);
-const totalCount = ref(0);
-const currentPage = ref(1);
-const perPage = ref(50);
-const totalPages = ref(1);
 
 /* 검색 핸들러 */
 const handleSearch = async () => {
@@ -409,6 +413,13 @@ const handleError = (error: string) => {
 onUnmounted(() => {
   clearPreviews();
 });
+
+/**
+ * 테이블 토글 핸들러
+ */
+const toggleTable = () => {
+  isTableExpanded.value = !isTableExpanded.value;
+};
 </script>
 
 <template>
@@ -424,20 +435,34 @@ onUnmounted(() => {
     <div class="section-divider"></div>
 
     <!-- 목록 영역 -->
-    <DataTable
-      :data="gradeData"
-      :table-info="gradeTableInfo"
-      :loading="loading"
-      :total-count="totalCount"
-      :current-page="currentPage"
-      :per-page="perPage"
-      :total-pages="totalPages"
-      :per-page-options="[50, 100]"
-      @update="handleUpdate"
-      @delete="handleDelete"
-      @update:current-page="handlePageChange"
-      @update:per-page="handlePerPageChange"
-    />
+    <div class="table-section">
+      <div 
+        class="table-header" 
+        @click="toggleTable"
+      >
+        <h3>성적 목록 (총 {{ totalCount }}건)</h3>
+        <span class="toggle-icon">
+          {{ isTableExpanded ? "▼" : "▶" }}
+        </span>
+      </div>
+      <div v-show="isTableExpanded" class="table-content">
+        <DataTable
+          :data="gradeData"
+          :table-info="gradeTableInfo"
+          :loading="loading"
+          :total-count="totalCount"
+          :current-page="currentPage"
+          :per-page="perPage"
+          :total-pages="totalPages"
+          :per-page-options="perPageOptions"
+          @update="handleUpdate"
+          @delete="handleDelete"
+          @update:current-page="handlePageChange"
+          @update:per-page="handlePerPageChange"
+        />
+      </div>
+    </div>
+
     <div class="section-divider"></div>
 
     <!-- 업로드 영역 -->
@@ -794,5 +819,40 @@ button:disabled {
 .reset-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.table-section {
+  margin: 1rem 0;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.table-header:hover {
+  background-color: var(--bg-hover);
+}
+
+.table-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.toggle-icon {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.table-content {
+  margin-top: 1rem;
 }
 </style> 
