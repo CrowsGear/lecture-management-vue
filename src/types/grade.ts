@@ -15,21 +15,20 @@ export interface IGrade {
   student?: IStudent;
 }
 
-export interface IGradeImage {
-  file: File;
+export interface IParsedGradeImageName {
   fileName: string;
   rawDateTime: string;
-  gradeImageUrl: string;
-  studentCode: string;
   examDateTime: string;
   lectureCode: string;
+  studentCode: string;
 }
 
 export interface IPreSignedUrl {
   signedUrl: string;
 }
 
-export interface IGradePreview extends IGradeImage {
+export interface IParsedGrade extends IParsedGradeImageName {
+  file: File;
   previewUrl: string;
   params: IGradeUploadParams;
   errorMessage?: string;

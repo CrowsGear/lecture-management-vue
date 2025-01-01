@@ -10,7 +10,7 @@ import FileDropZone from "../../components/common/FileDropZone.vue";
 import ImagePreviewModal from "../../components/common/ImagePreviewModal.vue";
 
 /* Types */
-import type { IGrade, IGradeImage, IGradeSearchParams, IGradePreview, IGradeUploadParams } from "../../types/grade";
+import type { IGrade, IParsedGradeImageName, IGradeSearchParams, IParsedGrade, IGradeUploadParams } from "../../types/grade";
 import type { ISearchConfig } from "../../types/common/common";
 import type { ITableInfo } from "../../types/common/common";
 
@@ -22,26 +22,29 @@ import { validateGradeImage, uploadGradeImage, fetchGrades, deleteGrade, getSmsF
  * 파일명 형식 정규식
  * @description 강의코드(15자이하)_YYMMDDHHMM_ST학번.확장자
  */
-const FILE_NAME_PATTERN_1 = /^[A-Za-z0-9-_]{1,15}_\d{10}_ST\d{10}\.(jpg|jpeg|png)$/i;
+const FILE_NAME_PATTERN_1 = {
+  pattern: /^[A-Za-z0-9-_]{1,15}_\d{10}_ST\d{10}\.(jpg|jpeg|png)$/i,
+  message: "파일명 형식이 올바르지 않습니다.\n형식1: 강의코드(15자이하)_YYMMDDHHMM_ST학번.확장자"
+};
 
 /**
  * 파일명 형식 정규식 2
  * @description 강의코드(15자이하)_YYMMDDHHMM_CUSTOM학번_ST학번.확장자
  */
-const FILE_NAME_PATTERN_2 = /^[A-Za-z0-9-_]{1,15}_\d{10}_[A-Za-z0-9-_]{1,15}_ST\d{10}\.(jpg|jpeg|png)$/i;
+const FILE_NAME_PATTERN_2 = {
+  pattern: /^[A-Za-z0-9-_]{1,15}_\d{10}_[A-Za-z0-9-_]{1,15}_ST\d{10}\.(jpg|jpeg|png)$/i,
+  message: "파일명 형식이 올바르지 않습니다.\n형식2: 강의코드(15자이하)_YYMMDDHHMM_CUSTOM학번_ST학번.확장자"
+};
 
 /* REFS for Upload */
 const isLoading = ref(false);
 const uploadProgress = ref(0);
 const selectedFiles = ref<File[] | null>(null);
-const parsedSuccessImages = ref<IGradePreview[]>([]);
-const parsedFailedImages = ref<IGradePreview[]>([]);
+const parsedSuccessImages = ref<IParsedGrade[]>([]);
+const parsedFailedImages = ref<IParsedGrade[]>([]);
 
 /* REFS for DataTable.vue */
 const gradeData = ref<IGrade[]>([]);
-const failedSmsData = computed(() => {
-  return gradeData.value.filter(item => item.smsStatus !== 1);
-});
 const loading = ref(false);
 const totalCount = ref(0);
 const currentPage = ref(1);
@@ -54,15 +57,20 @@ const showPreviewModal = ref(false);
 const selectedPreviewUrl = ref("");
 const selectedFileName = ref("");
 
-const openPreviewModal = (image: IGradePreview) => {
+/* REFS for Toggle */
+const isFailedSmsExpanded = ref(true);  // SMS 발송 실패 섹션 토글 상태
+const isAllListExpanded = ref(false);    // 전체 목록 섹션 토글 상태
+
+/* COMPUTED */
+const failedSmsData = computed(() => {
+  return gradeData.value.filter(item => item.smsStatus !== 1);
+});
+
+const openPreviewModal = (image: IParsedGrade) => {
   selectedPreviewUrl.value = image.previewUrl;
   selectedFileName.value = image.fileName;
   showPreviewModal.value = true;
 };
-
-/* REFS for Toggle */
-const isFailedSmsExpanded = ref(true);  // SMS 발송 실패 섹션 토글 상태
-const isAllListExpanded = ref(false);    // 전체 목록 섹션 토글 상태
 
 /* 파일 처리 관련 함수들 */
 /**
@@ -81,15 +89,12 @@ const validateFileName = (file: File): boolean => {
     alert("이미지 파일만 업로드 가능합니다.");
     return false;
   }
-  
-  // 파일명 형식1 검사 (강의코드(15자이하)_YYMMDDHHMM_ST학번.ext)
-  const fileNamePattern = FILE_NAME_PATTERN_1;
 
-  // 파일명 형식2 검사 (강의코드(15자이하)_YYMMDDHHMM_CUSTOM학번_ST학번.ext)
-  const fileNamePattern2 = FILE_NAME_PATTERN_2;
-
-  if (!fileNamePattern.test(file.name) && !fileNamePattern2.test(file.name)) {
-    alert("파일명 형식이 올바르지 않습니다.\n형식1: 강의코드(15자이하)_YYMMDDHHMM_ST학번.확장자\n형식2: 강의코드(15자이하)_YYMMDDHHMM_CUSTOM학번_ST학번.확장자");
+  if (
+    !FILE_NAME_PATTERN_1.pattern.test(file.name) && 
+    !FILE_NAME_PATTERN_2.pattern.test(file.name)
+  ) {
+    alert(FILE_NAME_PATTERN_1.message + "\n" + FILE_NAME_PATTERN_2.message);
     return false;
   }
 
@@ -99,11 +104,11 @@ const validateFileName = (file: File): boolean => {
 /**
  * 파일명 파싱 함수
  * @param fileName - 파일명
- * @returns {Partial<IGradeImage>} 파싱된 성적 이미지 정보
+ * @returns {Partial<IParsedGradeImageName>} 파싱된 성적 이미지 정보
  * @see validateFileName
  * @memberof validateAndFilterGradeImage
  */
-const parseFileName = (fileName: string): Partial<IGradeImage> => {
+const parseFileName = (fileName: string): IParsedGradeImageName => {
 
   const fileNameWithoutExtension = fileName.split(".")[0];
 
@@ -112,12 +117,12 @@ const parseFileName = (fileName: string): Partial<IGradeImage> => {
   let studentCode: string = "";
   
   // 파일명 형식1 의 경우
-  if (FILE_NAME_PATTERN_1.test(fileName)) {
+  if (FILE_NAME_PATTERN_1.pattern.test(fileName)) {
     [lectureCode, rawDateTime, studentCode] = fileNameWithoutExtension.split("_");
   }
 
   // 파일명 형식2 의 경우: CUSTOM학번은 무시.
-  if (FILE_NAME_PATTERN_2.test(fileName)) {
+  if (FILE_NAME_PATTERN_2.pattern.test(fileName)) {
     lectureCode = fileNameWithoutExtension.split("_")[0];
     rawDateTime = fileNameWithoutExtension.split("_")[1];
     studentCode = fileNameWithoutExtension.split("_")[3];
@@ -159,13 +164,13 @@ const createPreviewUrl = (file: File): string => {
 /**
  * 파일 유효성 검사 및 파일명 파싱
  * @param file - 검사할 파일
- * @returns {Promise<IGradePreview | null>} 검증 결과
+ * @returns {Promise<IParsedGrade | null>} 검증 결과
  * @see parseFileName
  * @see createPreviewUrl
  * @see validateGradeImage
  * @memberof handleFileSelect
  */
-const validateAndFilterGradeImage = async (file: File): Promise<any> => {
+const validateAndFilterGradeImage = async (file: File): Promise<IParsedGrade | null> => {
   const parsedFileName = parseFileName(file.name);
   const previewUrl = createPreviewUrl(file);
   const filePath = `${parsedFileName.lectureCode}/${parsedFileName.rawDateTime}/${file.name}`;
@@ -202,7 +207,7 @@ const validateAndFilterGradeImage = async (file: File): Promise<any> => {
     return {
       file,
       ...parsedFileName,
-      params,
+      params: params as IGradeUploadParams,
       previewUrl,
       smsForm: smsFormResponse.data.smsMessageForm
     };
@@ -214,7 +219,7 @@ const validateAndFilterGradeImage = async (file: File): Promise<any> => {
         params,
         previewUrl,
         errorMessage: error.response?.data?.message || "알 수 없는 오류가 발생했습니다."
-      } as IGradePreview);
+      } as IParsedGrade);
     } else {
       parsedFailedImages.value.push({
         file,
@@ -222,7 +227,7 @@ const validateAndFilterGradeImage = async (file: File): Promise<any> => {
         params,
         previewUrl,
         errorMessage: (error as Error).message
-      } as IGradePreview);
+      } as IParsedGrade);
     }
     return null;
   }
@@ -245,7 +250,7 @@ const handleFileSelect = async (files: File[]) => {
     files
       .filter(validateFileName) 
       .map(file => validateAndFilterGradeImage(file))
-    )).filter(image => image !== null) as IGradePreview[];
+    )).filter(image => image !== null) as IParsedGrade[];
 };
 
 /**
