@@ -37,20 +37,23 @@ const FILE_NAME_PATTERN_2 = {
 };
 
 /* REFS for Upload */
-const isLoading = ref(false);
-const uploadProgress = ref(0);
-const selectedFiles = ref<File[] | null>(null);
-const parsedSuccessImages = ref<IParsedGrade[]>([]);
-const parsedFailedImages = ref<IParsedGrade[]>([]);
+const isLoading = ref(false); // 로딩 상태
+const uploadProgress = ref(0); // 업로드 진행 상태
+const selectedFiles = ref<File[] | null>(null); // 선택된 파일 목록
+const parsedSuccessImages = ref<IParsedGrade[]>([]); // 성공한 파일 목록
+const parsedFailedImages = ref<IParsedGrade[]>([]); // 실패한 파일 목록
+const smsMessageForm = ref<string>(""); // SMS 폼 기본값
+const showSmsFormModal = ref(false); // SMS 폼 모달 표시 여부
+const editableSmsForm = ref<string>(""); // 수정 가능한 SMS 폼
 
 /* REFS for DataTable.vue */
-const gradeData = ref<IGrade[]>([]);
-const loading = ref(false);
-const totalCount = ref(0);
-const currentPage = ref(1);
-const perPage = ref(10);
-const perPageOptions = ref([10, 25, 50, 100]);
-const totalPages = ref(1);
+const gradeData = ref<IGrade[]>([]); // 성적 데이터
+const loading = ref(false); // 로딩 상태
+const totalCount = ref(0); // 총 데이터 수
+const currentPage = ref(1); // 현재 페이지
+const perPage = ref(10); // 페이지당 데이터 수
+const perPageOptions = ref([10, 25, 50, 100]); // 페이지당 데이터 수 옵션
+const totalPages = ref(1); // 총 페이지 수
 
 /* REFS for Image Preview Modal */
 const showPreviewModal = ref(false);
@@ -260,8 +263,26 @@ const handleFileSelect = async (files: File[]) => {
 const handleUpload = async () => {
   if (!parsedSuccessImages.value.length) return;
   
+  // SMS 폼 모달 표시
+  showSmsFormModal.value = true;
+  // 첫 번째 이미지의 SMS 폼을 기본값으로 설정
+  smsMessageForm.value = parsedSuccessImages.value[0].smsForm || "";
+  editableSmsForm.value = smsMessageForm.value;
+};
+
+/**
+ * SMS 폼 수정 후 최종 업로드
+ */
+const handleConfirmUpload = async () => {
   try {
+    showSmsFormModal.value = false;
     isLoading.value = true;
+    
+    // 모든 이미지의 SMS 폼 업데이트
+    parsedSuccessImages.value.forEach(image => {
+      image.params.smsForm = editableSmsForm.value;
+    });
+    
     const totalCount = parsedSuccessImages.value.length;
     
     for (let i = 0; i < totalCount; i++) {
@@ -649,6 +670,34 @@ const toggleAllList = () => {
       :image-alt="selectedFileName"
       @close="showPreviewModal = false"
     />
+    
+    <!-- SMS 폼 확인 모달 -->
+    <div v-if="showSmsFormModal" class="modal-overlay">
+      <div class="modal-content">
+        <h3>SMS 발송 내용 확인</h3>
+        <div class="sms-form-editor">
+          <textarea 
+            v-model="editableSmsForm"
+            rows="5"
+            placeholder="SMS 발송 내용을 입력하세요"
+          ></textarea>
+        </div>
+        <div class="modal-actions">
+          <button 
+            class="cancel-button"
+            @click="showSmsFormModal = false"
+          >
+            취소
+          </button>
+          <button 
+            class="confirm-button"
+            @click="handleConfirmUpload"
+          >
+            확인 후 업로드
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -957,5 +1006,86 @@ button:disabled {
 .toggle-icon {
   font-size: 1rem;
   color: var(--text-secondary);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: var(--bg-color);
+  padding: 2rem;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.sms-form-editor {
+  margin: 1rem 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.sms-form-editor textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  resize: vertical;
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.5;
+  background-color: #fff;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: auto;
+}
+
+.modal-actions button {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  min-width: 80px;
+}
+
+.cancel-button {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  transition: all 0.2s ease;
+}
+
+.cancel-button:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--text-color);
+}
+
+.confirm-button {
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.confirm-button:hover {
+  opacity: 0.9;
 }
 </style> 
