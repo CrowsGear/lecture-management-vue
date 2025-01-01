@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import Checkbox from "../common/Checkbox.vue";
-import type { ISchool } from "../../types/school";
-import type { ITableInfo } from "../../types/common/common.ts";
+/* Third Party */
+import { ref, computed, nextTick } from "vue";
 import { useRouter } from "vue-router";
 
+/* Components */
+import Checkbox from "../common/Checkbox.vue";
+
+/* Types */
+import type { ISchool } from "../../types/school";
+import type { ITableInfo } from "../../types/common/common.ts";
+
+/* Props */
 const props = defineProps<{
   data: any[];
   tableInfo: ITableInfo;
@@ -16,6 +22,7 @@ const props = defineProps<{
   detailRoute?: string;
 }>();
 
+/* Emits */
 const emit = defineEmits<{
   (e: "update", id: number, data: any): void;
   (e: "delete", id: number): void;
@@ -24,8 +31,13 @@ const emit = defineEmits<{
   (e: "update:perPage", count: number): void;
 }>();
 
+/* REFS */
+const router = useRouter();
+const tableRef = ref<HTMLElement | null>(null);
+const scrollPosition = ref(0);
 const selectedItems = ref<string[]>([]);
 
+/* Computed */
 const allSelected = computed({
   get: () => {
     return props.data.length > 0 && selectedItems.value.length === props.data.length;
@@ -37,44 +49,59 @@ const allSelected = computed({
   }
 });
 
-const parsedData = (field: string | string[], item: any) => {
-  // 단일 필드 처리
-  if (typeof field === "string") {
-    return item[field];
-  }
+const totalPages = computed(() => {
+  if (!props.totalCount || !props.perPage) return 1;
+  return Math.ceil(props.totalCount / props.perPage);
+});
 
-  // 중첩 필드 처리 
+/* Data Processing Functions */
+/**
+ * 데이터 파싱 함수
+ * @param field 필드 이름
+ * @param item 데이터 객체
+ */
+const parsedData = (field: string | string[], item: any) => {
   const getValue = (obj: any, keys: string[]): any => {
     if (!obj) return undefined;
-
     const [currentKey, ...remainingKeys] = keys;
     const currentValue = obj[currentKey];
-
-    // 마지막 키인 경우 현재 값 반환
-    if (remainingKeys.length === 0) {
-      return currentValue;
-    }
-
-    // 배열인 경우 각 요소에 대해 재귀 처리
+    if (remainingKeys.length === 0) return currentValue;
     if (Array.isArray(currentValue)) {
       return currentValue.flatMap(item => getValue(item, remainingKeys));
     }
-
-    // 객체인 경우 다음 키로 재귀 처리
     return getValue(currentValue, remainingKeys);
   };
 
-  const result = getValue(item, field);
-
-  /* 만약 result가 url이라면 링크로 변환 && 클릭 시 링크로 이동 */
+  const result = typeof field === "string" ? item[field] : getValue(item, field);
+  
   if (typeof result === "string" && result.startsWith("http")) {
-    return `<a href="${result}" target="_blank">${result}</a>`;
+    const fileName = result.split("/").pop() || result;
+    return `<a href="${result}" target="_blank" title="${result}">${fileName}</a>`;
   }
 
-  /* 배열인 경우 쉼표로 구분 */
   return Array.isArray(result) ? result.join(", ") : result;
 };
 
+/* Scroll Position Handlers */
+const saveScrollPosition = () => {
+  console.log("saveScrollPosition");
+  console.log(tableRef.value);
+  if (tableRef.value) {
+    const tableTop = tableRef.value.getBoundingClientRect().top;
+    scrollPosition.value = window.scrollY + tableTop;
+  }
+};
+
+const restoreScrollPosition = () => {
+  nextTick(() => {
+    window.scrollTo({
+      top: scrollPosition.value,
+      behavior: "instant"
+    });
+  });
+};
+
+/* Event Handlers */
 const toggleSelectAll = () => {
   emit("select", selectedItems.value);
 };
@@ -89,13 +116,6 @@ const handleDelete = (item: ISchool) => {
   }
 };
 
-const totalPages = computed(() => {
-  if (!props.totalCount || !props.perPage) return 1;
-  return Math.ceil(props.totalCount / props.perPage);
-});
-
-const router = useRouter();
-
 const handleRowClick = (item: any) => {
   if (props.detailRoute) {
     router.push({
@@ -105,10 +125,26 @@ const handleRowClick = (item: any) => {
   }
 };
 
+/* Pagination Handlers */
+const handlePageChange = (page: number) => {
+  saveScrollPosition();
+  emit("update:currentPage", page);
+  nextTick(() => {
+    restoreScrollPosition();
+  });
+};
+
+const handlePerPageChange = (count: number) => {
+  saveScrollPosition();
+  emit("update:perPage", count);
+  nextTick(() => {
+    restoreScrollPosition();
+  });
+};
 </script>
 
 <template>
-  <div class="data-table-wrapper">
+  <div class="data-table-wrapper" ref="tableRef">
     <div class="table-controls">
       <div class="total-count">
         총 {{ totalCount || data.length }}건
@@ -117,7 +153,7 @@ const handleRowClick = (item: any) => {
         <select 
           v-if="perPageOptions"
           :value="perPage"
-          @change="emit('update:perPage', Number(($event.target as HTMLSelectElement).value))"
+          @change="handlePerPageChange(Number(($event.target as HTMLSelectElement).value))"
         >
           <option 
             v-for="option in perPageOptions" 
@@ -169,8 +205,11 @@ const handleRowClick = (item: any) => {
               :value="item.id.toString()"
           />
         </td>
-        <td v-for="field in tableInfo.columns" :key="field.comment">
-          {{ parsedData(field.name, item) }}
+        <td 
+          v-for="column in tableInfo.columns" 
+          :key="column.name"
+          v-html="parsedData(column.name, item)"
+        >
         </td>
         <td>
           <div class="action-buttons">
@@ -195,14 +234,14 @@ const handleRowClick = (item: any) => {
     <div v-if="totalPages > 1" class="pagination">
       <button 
         :disabled="currentPage === 1"
-        @click="emit('update:currentPage', (currentPage || 1) - 1)"
+        @click="handlePageChange((currentPage || 1) - 1)"
       >
         이전
       </button>
       <span>{{ currentPage }} / {{ totalPages }}</span>
       <button 
         :disabled="currentPage === totalPages"
-        @click="emit('update:currentPage', (currentPage || 1) + 1)"
+        @click="handlePageChange((currentPage || 1) + 1)"
       >
         다음
       </button>
@@ -342,5 +381,14 @@ const handleRowClick = (item: any) => {
 
 .clickable:hover {
   background-color: var(--bg-hover);
+}
+
+:deep(a) {
+  color: var(--link-color, #0066cc);
+  text-decoration: none;
+}
+
+:deep(a:hover) {
+  text-decoration: underline;
 }
 </style>
