@@ -8,6 +8,8 @@ export interface ILecture {
   lectureEndDate: string;
   lectureIsShow: number;
   title: string;
+  description: string;
+  smsForm: string;
   createdAt?: string;
   updatedAt?: string;
   deletedAt?: string | null;
