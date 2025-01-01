@@ -43,6 +43,7 @@ const selectedFiles = ref<File[] | null>(null); // 선택된 파일 목록
 const parsedSuccessImages = ref<IParsedGrade[]>([]); // 성공한 파일 목록
 const parsedFailedImages = ref<IParsedGrade[]>([]); // 실패한 파일 목록
 const smsMessageForm = ref<string>(""); // SMS 폼 기본값
+const currentLectureCode = ref<string>(""); // 현재 처리 중인 강의 코드
 const showSmsFormModal = ref(false); // SMS 폼 모달 표시 여부
 const editableSmsForm = ref<string>(""); // 수정 가능한 SMS 폼
 
@@ -205,6 +206,22 @@ const validateAndFilterGradeImage = async (file: File): Promise<IParsedGrade | n
       throw new Error(smsFormResponse.message);
     }
 
+    // SMS 폼 검증
+    if (smsMessageForm.value && smsFormResponse.data.smsMessageForm !== smsMessageForm.value) {
+      throw new Error("서로 다른 강의의 성적은 함께 업로드할 수 없습니다.");
+    }
+    
+    // 첫 번째 이미지인 경우 SMS 폼과 강의코드 저장
+    if (!smsMessageForm.value) {
+      smsMessageForm.value = smsFormResponse.data.smsMessageForm;
+      currentLectureCode.value = parsedFileName.lectureCode!;
+    }
+    
+    // 강의코드 검증
+    if (currentLectureCode.value && currentLectureCode.value !== parsedFileName.lectureCode) {
+      throw new Error("서로 다른 강의의 성적은 함께 업로드할 수 없습니다.");
+    }
+
     params.smsForm = smsFormResponse.data.smsMessageForm;
 
     return {
@@ -319,6 +336,8 @@ const handleReset = () => {
   selectedFiles.value = null;
   parsedSuccessImages.value = [];
   parsedFailedImages.value = [];
+  smsMessageForm.value = "";
+  currentLectureCode.value = "";
 };
 
 /* 정리 함수 */
