@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import type { IGradeResponse } from "../types/grade";
+import type { IGrade } from "../types/grade";
 
 defineProps<{
-  grade: IGradeResponse;
+  grade: IGrade;
 }>();
 
 const imageLoaded = ref(false);

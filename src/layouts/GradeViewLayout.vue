@@ -3,14 +3,14 @@ import { ref, onMounted, computed } from "vue";
 import { useAuthStore } from "../stores/auth";
 import { fetchGrades } from "../api/grade";
 import GradeView from "../views/GradeView.vue";
-import type { IGradeResponse } from "../types/grade";
+import type { IGrade } from "../types/grade";
 import { useRouter } from "vue-router";
 
 const authStore = useAuthStore();
 const router = useRouter();
 const loading = ref(false);
-const gradeData = ref<IGradeResponse[]>([]);
-const selectedGrade = ref<IGradeResponse | null>(null);
+const gradeData = ref<IGrade[]>([]);
+const selectedGrade = ref<IGrade | null>(null);
 
 /* 최신 성적순으로 정렬된 목록 */
 const sortedGrades = computed(() => {
@@ -36,7 +36,7 @@ const fetch = async () => {
 };
 
 /* 성적 선택 */
-const handleSelectGrade = (grade: IGradeResponse) => {
+const handleSelectGrade = (grade: IGrade) => {
   selectedGrade.value = grade;
 };
 
@@ -64,7 +64,7 @@ onMounted(() => {
       <div class="grade-header">
         <div v-if="selectedGrade" class="grade-info">
           <h3>{{ selectedGrade.lectureSession!.lecture!.title }}</h3>
-          <span class="date">{{ new Date(selectedGrade.lectureSession.sessionDate).toLocaleDateString() }}</span>
+          <span class="date">{{ new Date(selectedGrade.lectureSession!.sessionDate).toLocaleDateString() }}</span>
         </div>
 
         <!-- 성적 목록 -->
@@ -77,7 +77,7 @@ onMounted(() => {
             @click="handleSelectGrade(grade)"
           >
             <span class="lecture-code">{{ grade.lectureSession!.lecture!.title }}</span>
-            <span class="date">{{ new Date(grade.lectureSession.sessionDate).toLocaleDateString() }}</span>
+            <span class="date">{{ new Date(grade.lectureSession!.sessionDate).toLocaleDateString() }}</span>
           </div>
         </div>
       </div>

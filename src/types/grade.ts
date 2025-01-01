@@ -1,5 +1,19 @@
 import type { ILectureSession } from "./lecture";
 import type { ISearchParams } from "./common/searchParams";
+import { IStudent } from "./student";
+
+export interface IGrade {
+  id: number;
+  gradeImageUrl: string;
+  lectureSessionId: number;
+  studentId: number;
+  smsStatus: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  lectureSession?: ILectureSession;
+  student?: IStudent;
+}
 
 export interface IGradeImage {
   file: File;
@@ -41,15 +55,4 @@ export interface IGradeUploadParams {
 export interface IGradeSearchParams extends ISearchParams {
   studentName?: string;
   lectureCode?: string;
-}
-
-export interface IGradeResponse {
-  id: number;
-  gradeImageUrl: string;
-  lectureSessionId: number;
-  studentId: number;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-  lectureSession: ILectureSession;
 }
