@@ -3,8 +3,13 @@ import type { IGradeUploadParams } from "../types/grade";
 import type { IResponse } from "../types/common/response";
 import type { IGradeSearchParams } from "../types/grade";
 
-export const validateGradeImage = async (params: IGradeUploadParams): Promise<IResponse> => {
+export const validateGradeImage = async (params: Partial<IGradeUploadParams>): Promise<IResponse> => {
   const response = await axios.post("/grades/check", params);
+  return response.data;
+};
+
+export const getSmsForm = async (params: Partial<IGradeUploadParams>): Promise<IResponse> => {
+  const response = await axios.post("/grades/sms-form-check", params);
   return response.data;
 };
 

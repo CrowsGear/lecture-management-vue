@@ -35,6 +35,7 @@ export interface IGradePreview extends IGradeImage {
   errorMessage?: string;
   uploadStatus?: "success" | "error";
   uploadMessage?: string;
+  smsForm?: string;
 }
 
 export interface IGradeUploadParams {
@@ -50,6 +51,7 @@ export interface IGradeUploadParams {
       sessionDate: string;
     };
   };
+  smsForm: string;
 }
 
 export interface IGradeSearchParams extends ISearchParams {

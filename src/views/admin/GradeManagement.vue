@@ -15,7 +15,7 @@ import type { ISearchConfig } from "../../types/common/common";
 import type { ITableInfo } from "../../types/common/common";
 
 /* APIs */
-import { validateGradeImage, uploadGradeImage, fetchGrades, deleteGrade } from "../../api/grade";
+import { validateGradeImage, uploadGradeImage, fetchGrades, deleteGrade, getSmsForm } from "../../api/grade";
 
 /* CONSTANTS */
 /**
@@ -169,7 +169,7 @@ const validateAndFilterGradeImage = async (file: File): Promise<any> => {
   const parsedFileName = parseFileName(file.name);
   const previewUrl = createPreviewUrl(file);
   const filePath = `${parsedFileName.lectureCode}/${parsedFileName.rawDateTime}/${file.name}`;
-  const params: IGradeUploadParams = {
+  const params: Partial<IGradeUploadParams> = {
     lecture: {
       lectureCode: parsedFileName.lectureCode!,
       student: {
@@ -187,16 +187,24 @@ const validateAndFilterGradeImage = async (file: File): Promise<any> => {
   /* 성적 이미지 검증 */
   try {
     const validateResponse = await validateGradeImage(params);
+    const smsFormResponse = await getSmsForm(params);
 
     if (validateResponse.code !== "GR-10") {
       throw new Error(validateResponse.message);
     }
 
+    if (smsFormResponse.code !== "GR-12") {
+      throw new Error(smsFormResponse.message);
+    }
+
+    params.smsForm = smsFormResponse.data.smsMessageForm;
+
     return {
       file,
       ...parsedFileName,
       params,
-      previewUrl
+      previewUrl,
+      smsForm: smsFormResponse.data.smsMessageForm
     };
   } catch (error) {
     if (error instanceof AxiosError) {
