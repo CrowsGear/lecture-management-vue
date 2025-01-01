@@ -2,7 +2,7 @@
 # run this script to build all environments
 
 # 환경 목록 정의
-ENVIRONMENTS=("dev" "kjm0703" "kjs0928")
+ENVIRONMENTS=("kjm0703" "kjs0928")
 
 # 각 환경별 빌드 실행
 for env in "${ENVIRONMENTS[@]}"; do
