@@ -10,7 +10,7 @@ WORKDIR /app
 # 의존성은 yarn.lock을 기준으로 설치(yarn)
 COPY package*.json yarn.lock ./
 
-# RUN yarn install
+# 의존성 설치
 RUN yarn install
 
 # 소스코드 복사 및 빌드
