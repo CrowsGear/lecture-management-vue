@@ -17,6 +17,20 @@ import type { ITableInfo } from "../../types/common/common";
 /* APIs */
 import { validateGradeImage, uploadGradeImage, fetchGrades, deleteGrade } from "../../api/grade";
 
+/* CONSTANTS */
+/**
+ * 파일명 형식 정규식
+ * @description 강의코드(15자이하)_YYMMDDHHMM_ST학번.확장자
+ */
+const FILE_NAME_PATTERN_1 = /^[A-Za-z0-9-_]{1,15}_\d{10}_ST\d{10}\.(jpg|jpeg|png)$/i;
+
+/**
+ * 파일명 형식 정규식 2
+ * @description 강의코드(15자이하)_YYMMDDHHMM_CUSTOM학번_ST학번.확장자
+ */
+const FILE_NAME_PATTERN_2 = /^[A-Za-z0-9-_]{1,15}_\d{10}_[A-Za-z0-9-_]{1,15}_ST\d{10}\.(jpg|jpeg|png)$/i;
+
+/* REFS */
 const isLoading = ref(false);
 const uploadProgress = ref(0);
 const selectedFiles = ref<File[] | null>(null);
@@ -34,14 +48,63 @@ const openPreviewModal = (image: IGradePreview) => {
   showPreviewModal.value = true;
 };
 
+/* 파일 처리 관련 함수들 */
 /**
- * 파일명 파싱 함수 (예: "WVA_2412171100_ST3198473462.png")
- * @param fileName - 파일명 (강의코드(15자이하)_YYMMDDHHMM_ST학번.확장자)
+ * 파일명 유효성 검사
+ * @param file - 검사할 파일
+ * @returns {boolean} 유효성 검사 결과
+ * @see FILE_NAME_PATTERN_1
+ * @see FILE_NAME_PATTERN_2
+ * @memberof handleFileSelect
+ */
+const validateFileName = (file: File): boolean => {
+  const validExtensions = ["jpg", "jpeg", "png"];
+  const extension = file.name.split(".").pop()?.toLowerCase() || "";
+  
+  if (!validExtensions.includes(extension)) {
+    alert("이미지 파일만 업로드 가능합니다.");
+    return false;
+  }
+  
+  // 파일명 형식1 검사 (강의코드(15자이하)_YYMMDDHHMM_ST학번.ext)
+  const fileNamePattern = FILE_NAME_PATTERN_1;
+
+  // 파일명 형식2 검사 (강의코드(15자이하)_YYMMDDHHMM_CUSTOM학번_ST학번.ext)
+  const fileNamePattern2 = FILE_NAME_PATTERN_2;
+
+  if (!fileNamePattern.test(file.name) && !fileNamePattern2.test(file.name)) {
+    alert("파일명 형식이 올바르지 않습니다.\n형식1: 강의코드(15자이하)_YYMMDDHHMM_ST학번.확장자\n형식2: 강의코드(15자이하)_YYMMDDHHMM_CUSTOM학번_ST학번.확장자");
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * 파일명 파싱 함수
+ * @param fileName - 파일명
  * @returns {Partial<IGradeImage>} 파싱된 성적 이미지 정보
+ * @see validateFileName
+ * @memberof validateAndFilterGradeImage
  */
 const parseFileName = (fileName: string): Partial<IGradeImage> => {
-  const [lectureCode, rawDateTime, studentCode] = fileName.split(".")[0].split("_");
+
+  let lectureCode: string = "";
+  let rawDateTime: string = "";
+  let studentCode: string = "";
   
+  // 파일명 형식1 의 경우
+  if (FILE_NAME_PATTERN_1.test(fileName)) {
+    [lectureCode, rawDateTime, studentCode] = fileName.split(".")[0].split("_");
+  }
+
+  // 파일명 형식2 의 경우: CUSTOM학번은 무시.
+  if (FILE_NAME_PATTERN_2.test(fileName)) {
+    lectureCode = fileName.split("_")[0];
+    rawDateTime = fileName.split("_")[1];
+    studentCode = fileName.split("_")[3];
+  }
+
   // 강의코드 길이 검증
   if (lectureCode.length > 15) {
     throw new Error(`${fileName}: 강의코드는 15자 이하여야 합니다.`);
@@ -66,29 +129,24 @@ const parseFileName = (fileName: string): Partial<IGradeImage> => {
 };
 
 /**
- * 파일 유효성 검사
- * @param file - 검사할 파일
- * @returns {boolean} 유효성 검사 결과
+ * 파일 미리보기 URL 생성
+ * @param file - 이미지 파일
+ * @returns {string} 미리보기 URL
+ * @memberof validateAndFilterGradeImage
  */
-const validateFileName = (file: File): boolean => {
-  const validExtensions = ["jpg", "jpeg", "png"];
-  const extension = file.name.split(".").pop()?.toLowerCase() || "";
-  
-  if (!validExtensions.includes(extension)) {
-    alert("이미지 파일만 업로드 가능합니다.");
-    return false;
-  }
-  
-  // 파일명 형식 검사 (강의코드(15자이하)_YYMMDDHHMM_ST학번.ext)
-  const fileNamePattern = /^[A-Za-z0-9-_]{1,15}_\d{10}_ST\d{10}\.(jpg|jpeg|png)$/i;
-  if (!fileNamePattern.test(file.name)) {
-    alert("파일명 형식이 올바르지 않습니다.\n형식: 강의코드(15자이하)_YYMMDDHHMM_ST학번.확장자");
-    return false;
-  }
-
-  return true;
+const createPreviewUrl = (file: File): string => {
+  return URL.createObjectURL(file);
 };
 
+/**
+ * 파일 유효성 검사 및 파일명 파싱
+ * @param file - 검사할 파일
+ * @returns {Promise<IGradePreview | null>} 검증 결과
+ * @see parseFileName
+ * @see createPreviewUrl
+ * @see validateGradeImage
+ * @memberof handleFileSelect
+ */
 const validateAndFilterGradeImage = async (file: File): Promise<any> => {
   const parsedFileName = parseFileName(file.name);
   const previewUrl = createPreviewUrl(file);
@@ -144,37 +202,12 @@ const validateAndFilterGradeImage = async (file: File): Promise<any> => {
   }
 };
 
+/* 이벤트 핸들러 */
 /**
- * 파일 미리보기 URL 생성
- * @param file - 이미지 파일
- * @returns {string} 미리보기 URL
- * 
- * @memberof handleFileSelect
- */
-const createPreviewUrl = (file: File): string => {
-  return URL.createObjectURL(file);
-};
-
-/**
- * 미리보기 URL 정리
- * 
- * @memberof handleFileSelect
- * @memberof handleUpload
- */
-const clearPreviews = () => {
-  parsedSuccessImages.value.forEach(image => {
-    URL.revokeObjectURL(image.previewUrl);
-  });
-};
-
-/**
- * 파일 선택 핸들러 for FileDropZone
- * 
+ * 파일 선택 핸들러
  * @param files - 선택된 파일 목록
- * @see clearPreviews - 기존 미리보기 정리
- * @see validateFileName - 파일 유효성 검사
- * @see parseFileName - 파일명 파싱
- * @see createPreviewUrl - 미리보기 URL 생성
+ * @see validateFileName
+ * @see validateAndFilterGradeImage
  */
 const handleFileSelect = async (files: File[]) => {
   if (!files.length) return;
@@ -191,8 +224,7 @@ const handleFileSelect = async (files: File[]) => {
 
 /**
  * 업로드 실행
- * @see uploadGradeImage - 업로드 프로세스
- * @see clearPreviews - 미리보기 정리
+ * @see uploadGradeImage
  */
 const handleUpload = async () => {
   if (!parsedSuccessImages.value.length) return;
@@ -205,17 +237,17 @@ const handleUpload = async () => {
       const imageInfo = parsedSuccessImages.value[i];
       try {
         const response = await uploadGradeImage(imageInfo.file, imageInfo.params);
-        imageInfo.uploadStatus = 'success';
+        imageInfo.uploadStatus = "success";
         imageInfo.uploadMessage = response.message;
       } catch (error) {
-        imageInfo.uploadStatus = 'error';
-        imageInfo.uploadMessage = error instanceof Error ? error.message : '업로드 실패';
+        imageInfo.uploadStatus = "error";
+        imageInfo.uploadMessage = error instanceof Error ? error.message : "업로드 실패";
       }
 
       uploadProgress.value = ((i + 1) / totalCount) * 100;
     }
 
-    const successCount = parsedSuccessImages.value.filter(img => img.uploadStatus === 'success').length;
+    const successCount = parsedSuccessImages.value.filter(img => img.uploadStatus === "success").length;
     alert(`${successCount}/${totalCount}개 파일이 업로드되었습니다.`);
   } catch (error) {
     console.error("업로드 오류:", error);
@@ -227,20 +259,28 @@ const handleUpload = async () => {
 };
 
 /**
- * 에러 핸들러 for FileDropZone
- * 
- * @param error - 에러 메시지
+ * 초기화 핸들러
+ * @see clearPreviews
  */
-const handleError = (error: string) => {
-  alert(error);
+const handleReset = () => {
+  clearPreviews();
+  selectedFiles.value = null;
+  parsedSuccessImages.value = [];
+  parsedFailedImages.value = [];
 };
 
+/* 정리 함수 */
 /**
- * 컴포넌트 언마운트 시 정리
+ * 미리보기 URL 정리
+ * @memberof handleReset
+ * @memberof handleFileSelect
+ * @memberof onUnmounted
  */
-onUnmounted(() => {
-  clearPreviews();
-});
+const clearPreviews = () => {
+  parsedSuccessImages.value.forEach(image => {
+    URL.revokeObjectURL(image.previewUrl);
+  });
+};
 
 /* 검색 파라미터 */
 const searchParams = ref<IGradeSearchParams>({
@@ -287,8 +327,9 @@ const gradeTableInfo = ref<ITableInfo>({
   tableName: "grade",
   tableComment: "성적",
   columns: [
-    { name: "lectureCode", comment: "강의코드" },
-    { name: "studentName", comment: "학생명" },
+    { name: ["lectureSession", "lecture", "title"], comment: "강의명"},
+    { name: ["lectureSession", "lecture", "lectureCode"], comment: "강의코드" },
+    { name: ["student", "studentName"], comment: "학생명" },
     { name: "examDateTime", comment: "시험일시" },
     { name: "gradeImageUrl", comment: "이미지" },
     { name: "createdAt", comment: "등록일자" }
@@ -358,12 +399,16 @@ onMounted(() => {
   handleSearch();
 });
 
-const handleReset = () => {
-  clearPreviews();
-  selectedFiles.value = null;
-  parsedSuccessImages.value = [];
-  parsedFailedImages.value = [];
+const handleError = (error: string) => {
+  alert(error);
 };
+
+/**
+ * 컴포넌트 언마운트 시 정리
+ */
+onUnmounted(() => {
+  clearPreviews();
+});
 </script>
 
 <template>
@@ -407,7 +452,7 @@ const handleReset = () => {
       >
         <template #default>
           <p>성적 이미지 파일을 드래그하거나 클릭하여 업로드</p>
-          <p class="sub-text">파일명 형식: 강의코드(15자이하)_YYMMDDHHMM_ST학번.확장자</p>
+          <p class="sub-text">파일명 형식: 강의코드(15자이하)_YYMMDDHHMM_ST학번.확장자 (혹은 강의코드(15자이하)_YYMMDDHHMM_CUSTOM학번_ST학번.확장자)</p>
         </template>
       </FileDropZone>
       
