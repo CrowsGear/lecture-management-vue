@@ -20,5 +20,6 @@ jobs:
           key: ${{secrets.EC2_SSH_KEY}}
           script: |
             cd $HOME/lecture-management-compose
+            echo $PWD
             chmod +x start_dev.sh
             ./start_dev.sh
