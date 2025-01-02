@@ -7,18 +7,18 @@ on:
     branches: [main]
 
 jobs:
-    deploy-prod:
-        runs-on: Linux-ARM64-runner
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+  deploy-prod:
+      runs-on: Linux-ARM64-runner
+      if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
-        steps:
-            - name: Execute start.sh on EC2
-              uses: appleboy/ssh-action@master
-              with:
-                host: ${{secrets.EC2_HOST}}
-                username: ${{secrets.EC2_USERNAME}}
-                key: ${{secrets.EC2_SSH_KEY}}
-                script: |
-                  cd $HOME/lecture-management-compose
-                  chmod +x start.sh
-                  ./start.sh
+      steps:
+          - name: Execute start.sh on EC2
+            uses: appleboy/ssh-action@master
+            with:
+              host: ${{secrets.EC2_HOST}}
+              username: ${{secrets.EC2_USERNAME}}
+              key: ${{secrets.EC2_SSH_KEY}}
+              script: |
+                cd $HOME/lecture-management-compose
+                chmod +x start.sh
+                ./start.sh
