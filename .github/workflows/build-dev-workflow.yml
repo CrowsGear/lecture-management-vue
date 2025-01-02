@@ -8,7 +8,7 @@ on:
       - ".gitignore"
 
 jobs:
-  build-and-push:
+  build-and-push-dev:
     runs-on: Linux-ARM64-runner
 
     steps:

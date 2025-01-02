@@ -34,7 +34,10 @@ export interface IParsedGrade extends IParsedGradeImageName {
   errorMessage?: string;
   uploadStatus?: "success" | "error";
   uploadMessage?: string;
-  smsForm?: string;
+  smsForm?: {
+    smsFormMsg: string;
+    title: string;
+  };
 }
 
 export interface IGradeUploadParams {
@@ -50,7 +53,10 @@ export interface IGradeUploadParams {
       sessionDate: string;
     };
   };
-  smsForm: string;
+  smsForm: {
+    smsFormMsg: string;
+    title: string;
+  };
 }
 
 export interface IGradeSearchParams extends ISearchParams {

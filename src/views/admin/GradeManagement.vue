@@ -42,7 +42,13 @@ const uploadProgress = ref(0); // 업로드 진행 상태
 const selectedFiles = ref<File[] | null>(null); // 선택된 파일 목록
 const parsedSuccessImages = ref<IParsedGrade[]>([]); // 성공한 파일 목록
 const parsedFailedImages = ref<IParsedGrade[]>([]); // 실패한 파일 목록
-const smsMessageForm = ref<string>(""); // SMS 폼 기본값
+const smsForm = ref<{
+  title: string;
+  smsFormMsg: string;
+}>({
+  title: "",
+  smsFormMsg: "",
+}); // SMS 폼 기본값
 const currentLectureCode = ref<string>(""); // 현재 처리 중인 강의 코드
 const showSmsFormModal = ref(false); // SMS 폼 모달 표시 여부
 const editableSmsForm = ref<string>(""); // 수정 가능한 SMS 폼
@@ -207,29 +213,41 @@ const validateAndFilterGradeImage = async (file: File): Promise<IParsedGrade | n
     }
 
     // SMS 폼 검증
-    if (smsMessageForm.value && smsFormResponse.data.smsMessageForm !== smsMessageForm.value) {
+    if (
+      smsForm.value.smsFormMsg && 
+      smsFormResponse.data.smsForm.smsFormMsg !== smsForm.value.smsFormMsg
+    ) {
       throw new Error("서로 다른 강의의 성적은 함께 업로드할 수 없습니다.");
     }
     
     // 첫 번째 이미지인 경우 SMS 폼과 강의코드 저장
-    if (!smsMessageForm.value) {
-      smsMessageForm.value = smsFormResponse.data.smsMessageForm;
+    if (
+      smsForm.value.smsFormMsg === "" || 
+      smsForm.value.title === ""
+    ) {
+      smsForm.value = {
+        smsFormMsg: smsFormResponse.data.smsForm.smsFormMsg,
+        title: smsFormResponse.data.smsForm.title
+      };
       currentLectureCode.value = parsedFileName.lectureCode!;
     }
     
     // 강의코드 검증
-    if (currentLectureCode.value && currentLectureCode.value !== parsedFileName.lectureCode) {
+    if (
+      currentLectureCode.value && 
+      currentLectureCode.value !== parsedFileName.lectureCode
+    ) {
       throw new Error("서로 다른 강의의 성적은 함께 업로드할 수 없습니다.");
     }
 
-    params.smsForm = smsFormResponse.data.smsMessageForm;
+    params.smsForm = smsFormResponse.data.smsForm;
 
     return {
       file,
       ...parsedFileName,
       params: params as IGradeUploadParams,
       previewUrl,
-      smsForm: smsFormResponse.data.smsMessageForm
+      smsForm: smsFormResponse.data.smsForm
     };
   } catch (error) {
     if (error instanceof AxiosError) {
@@ -282,9 +300,7 @@ const handleUpload = async () => {
   
   // SMS 폼 모달 표시
   showSmsFormModal.value = true;
-  // 첫 번째 이미지의 SMS 폼을 기본값으로 설정
-  smsMessageForm.value = parsedSuccessImages.value[0].smsForm || "";
-  editableSmsForm.value = smsMessageForm.value;
+  editableSmsForm.value = smsForm.value.smsFormMsg || "기본 양식이 없습니다.";
 };
 
 /**
@@ -297,7 +313,7 @@ const handleConfirmUpload = async () => {
     
     // 모든 이미지의 SMS 폼 업데이트
     parsedSuccessImages.value.forEach(image => {
-      image.params.smsForm = editableSmsForm.value;
+      image.params.smsForm.smsFormMsg = editableSmsForm.value;
     });
     
     const totalCount = parsedSuccessImages.value.length;
@@ -336,7 +352,10 @@ const handleReset = () => {
   selectedFiles.value = null;
   parsedSuccessImages.value = [];
   parsedFailedImages.value = [];
-  smsMessageForm.value = "";
+  smsForm.value = {
+    title: "",
+    smsFormMsg: ""
+  };
   currentLectureCode.value = "";
 };
 
@@ -419,7 +438,6 @@ const handleSearch = async () => {
     loading.value = true;
     const response = await fetchGrades(searchParams.value);
     gradeData.value = response.data.items;
-    console.log("gradeData", gradeData.value);
     totalCount.value = response.data.count;
     totalPages.value = Math.ceil(totalCount.value / perPage.value);
   } catch (error) {
