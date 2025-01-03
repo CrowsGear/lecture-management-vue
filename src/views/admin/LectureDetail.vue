@@ -99,12 +99,17 @@ const handleCancelEdit = () => {
             <th>SMS 양식</th>
             <td class="sms-form-cell">
               <template v-if="isEditingSmsForm">
-                <textarea
-                  v-model="editedSmsForm"
-                  class="sms-form-editor"
-                  rows="5"
-                  placeholder="SMS 양식을 입력하세요"
-                ></textarea>
+                <div class="sms-form-preview">
+                  <textarea
+                    v-model="editedSmsForm"
+                    class="sms-form-editor"
+                    rows="5"
+                    placeholder="SMS 양식을 입력하세요"
+                  ></textarea>
+                  <div class="character-count">
+                    {{ editedSmsForm.length }}/1000자
+                  </div>
+                </div>
                 <div class="edit-actions">
                   <button class="save-btn" @click="handleSaveSmsForm">저장</button>
                   <button class="cancel-btn" @click="handleCancelEdit">취소</button>
@@ -112,7 +117,13 @@ const handleCancelEdit = () => {
               </template>
               <template v-else>
                 <div class="sms-form-content">
-                  <pre>{{ lecture.smsForm || '-' }}</pre>
+                  <div class="sms-preview-box">
+                    <div class="sms-preview-header">
+                      <span>SMS 미리보기</span>
+                      <span class="character-count">{{ (lecture.smsForm || '').length }}/1000자</span>
+                    </div>
+                    <pre>{{ lecture.smsForm || '-' }}</pre>
+                  </div>
                   <button class="edit-btn" @click="handleEditSmsForm">수정</button>
                 </div>
               </template>
@@ -175,6 +186,48 @@ const handleCancelEdit = () => {
   min-height: calc(1.2em * 1.4 * 8);  /* 기본 8줄 높이의 1.2배 */
 }
 
+.sms-preview-box {
+  background-color: #f8f9fa;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  flex: 1;
+  max-width: 400px;  /* 일반적인 핸드폰 가로 크기 */
+  aspect-ratio: 9/16;  /* 모바일 화면 비율 */
+  margin: 0 auto;  /* 중앙 정렬 */
+  display: flex;
+  flex-direction: column;
+}
+
+.sms-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.character-count {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.sms-form-preview {
+  position: relative;
+  background-color: #f8f9fa;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  max-width: 400px;
+  aspect-ratio: 9/16;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
 .sms-form-content {
   display: flex;
   flex-direction: column;
@@ -190,7 +243,9 @@ const handleCancelEdit = () => {
   flex: 1;
   line-height: 1.4;
   min-height: inherit;
-  font-size: 14px;
+  font-size: 15px;
+  color: #333;
+  padding: 0.5rem;
 }
 
 .sms-form-content .edit-btn {
@@ -201,14 +256,16 @@ const handleCancelEdit = () => {
 .sms-form-editor {
   width: 100%;
   padding: 8px;
-  border: 1px solid var(--border-color);
+  border: none;
   border-radius: 4px;
   resize: vertical;
-  min-height: calc(1.2em * 1.4 * 8);  /* 기본 8줄 높이의 1.2배 */
+  min-height: calc(1.2em * 1.4 * 8);
   font-family: inherit;
   line-height: 1.4;
-  height: auto;  /* 내용에 맞춰 자동 높이 조정 */
-  font-size: 14px;
+  height: auto;
+  font-size: 15px;
+  background-color: transparent;
+  flex: 1;
 }
 
 .edit-actions {
