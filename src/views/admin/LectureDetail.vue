@@ -190,6 +190,7 @@ const handleCancelEdit = () => {
   flex: 1;
   line-height: 1.4;
   min-height: inherit;
+  font-size: 14px;
 }
 
 .sms-form-content .edit-btn {
@@ -207,6 +208,7 @@ const handleCancelEdit = () => {
   font-family: inherit;
   line-height: 1.4;
   height: auto;  /* 내용에 맞춰 자동 높이 조정 */
+  font-size: 14px;
 }
 
 .edit-actions {
