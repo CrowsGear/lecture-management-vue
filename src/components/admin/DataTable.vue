@@ -118,6 +118,7 @@ const handleDelete = (item: ISchool) => {
 
 const handleRowClick = (item: any) => {
   if (props.detailRoute) {
+    console.log("handleRowClick", props.detailRoute, item);
     router.push({
       name: props.detailRoute,
       params: { id: item.id }

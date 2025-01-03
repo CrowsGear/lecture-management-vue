@@ -1,4 +1,6 @@
 import type { ISearchParams } from "./common/searchParams";
+import type { IStudent } from "./student";
+import type { ITeacher } from "./teacher";
 
 export interface ILecture {
   id: number;
@@ -10,6 +12,9 @@ export interface ILecture {
   title: string;
   description: string;
   smsForm: string;
+  teacher?: ITeacher;
+  lectureSessions?: ILectureSession[];
+  lectureStudents?: ILectureStudent[];
   createdAt?: string;
   updatedAt?: string;
   deletedAt?: string | null;
@@ -34,6 +39,8 @@ export interface ILectureStudent {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  student?: IStudent;
+  lecture?: ILecture;
 }
 
 export interface ILectureSearchParams extends ISearchParams {

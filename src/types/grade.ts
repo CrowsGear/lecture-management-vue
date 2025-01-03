@@ -7,7 +7,7 @@ export interface IGrade {
   gradeImageUrl: string;
   lectureSessionId: number;
   studentId: number;
-  smsStatus: number;
+  smsStatus: string;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
