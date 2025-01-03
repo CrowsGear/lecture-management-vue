@@ -73,7 +73,7 @@ const isAllListExpanded = ref(false);    // 전체 목록 섹션 토글 상태
 
 /* COMPUTED */
 const failedSmsData = computed(() => {
-  return gradeData.value.filter(item => item.smsStatus !== 1);
+  return gradeData.value.filter(item => item.smsStatus !== "성공");
 });
 
 const openPreviewModal = (image: IParsedGrade) => {

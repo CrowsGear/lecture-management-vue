@@ -70,6 +70,7 @@ onMounted(() => {
 <style scoped>
 .admin-layout {
   display: flex;
+  width: 100%;
   min-height: 100vh;
   background-color: var(--content-bg);
 }
@@ -79,6 +80,7 @@ onMounted(() => {
   background-color: var(--sidebar-bg);
   color: var(--sidebar-text);
   padding: 20px 0;
+  flex-shrink: 0;
 }
 
 .logo-container {
@@ -119,7 +121,9 @@ onMounted(() => {
   padding: 20px;
   background-color: var(--content-bg);
   color: var(--text-color);
+  width: calc(100% - 240px);
   min-width: 900px;
   box-sizing: border-box;
+  overflow-x: auto;
 }
 </style>

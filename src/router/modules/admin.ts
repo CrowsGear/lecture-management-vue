@@ -14,7 +14,12 @@ const adminRoutes: RouteRecordRaw[] = [
             {
                 path: "lectures",
                 name: "LectureManagement",
-                component: () => import("../../views/admin/LectureManagement.vue"),
+                component: () => import("../../views/admin/LectureManagement.vue")
+            },
+            {
+                path: "lectures/:id",
+                name: "lecture-detail", 
+                component: () => import("../../views/admin/LectureDetail.vue")
             },
             {
                 path: "students", 

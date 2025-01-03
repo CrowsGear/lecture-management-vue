@@ -273,6 +273,7 @@ onMounted(() => {
         :current-page="currentPage"
         :per-page="perPage"
         :per-page-options="[50, 100]"
+        detail-route="lecture-detail"
         @update="startEdit"
         @update:current-page="handlePageChange"
         @update:per-page="handlePerPageChange"

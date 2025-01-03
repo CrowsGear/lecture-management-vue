@@ -14,6 +14,16 @@ export const fetchLectures = async (searchParams?: ITeacherSearchParams): Promis
   }
 };
 
+export const fetchLectureById = async (id: number): Promise<IResponse> => {
+  try {
+    const response = await axios.get(`/lectures/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch lecture by id:", error);
+    throw error;
+  }
+};
+
 export const createLecture = async (lectureData: Partial<ILecture>): Promise<IResponse> => {
   try {
     const response = await axios.post("/lectures", lectureData);
@@ -26,7 +36,7 @@ export const createLecture = async (lectureData: Partial<ILecture>): Promise<IRe
 
 export const updateLecture = async (id: number, lectureData: Partial<ILecture>): Promise<IResponse> => {
   try {
-    const response = await axios.put(`/lectures/${id}`, lectureData);
+    const response = await axios.patch(`/lectures/${id}`, lectureData);
     return response.data;
   } catch (error) {
     console.error("Failed to update lecture:", error);
