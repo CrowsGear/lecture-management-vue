@@ -48,7 +48,7 @@ const smsForm = ref<{
 }>({
   title: "",
   smsFormMsg: "",
-}); // SMS 폼 기본값
+});
 const currentLectureCode = ref<string>(""); // 현재 처리 중인 강의 코드
 const showSmsFormModal = ref(false); // SMS 폼 모달 표시 여부
 const editableSmsForm = ref<string>(""); // 수정 가능한 SMS 폼
