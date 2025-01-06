@@ -13,10 +13,11 @@ import ImagePreviewModal from "../../components/common/ImagePreviewModal.vue";
 import type { IGrade, IParsedGradeImageName, IGradeSearchParams, IParsedGrade, IGradeUploadParams } from "../../types/grade";
 import type { ISearchConfig } from "../../types/common/common";
 import type { ITableInfo } from "../../types/common/common";
+import type { ISmsFormPlaceholder } from "../../types/constant";
 
 /* APIs */
 import { validateGradeImage, uploadGradeImage, fetchGrades, deleteGrade, getSmsForm } from "../../api/grade";
-
+import { fetchSmsFormPlaceholders } from "../../api/constant";
 /* CONSTANTS */
 /**
  * 파일명 형식 정규식
@@ -50,6 +51,7 @@ const smsForm = ref<{
   smsFormMsg: "",
 });
 const currentLectureCode = ref<string>(""); // 현재 처리 중인 강의 코드
+const smsFormPlaceholders = ref<ISmsFormPlaceholder[]>([]);
 const showSmsFormModal = ref(false); // SMS 폼 모달 표시 여부
 const editableSmsForm = ref<string>(""); // 수정 가능한 SMS 폼
 
@@ -334,6 +336,9 @@ const handleConfirmUpload = async () => {
 
     const successCount = parsedSuccessImages.value.filter(img => img.uploadStatus === "success").length;
     alert(`${successCount}/${totalCount}개 파일이 업로드되었습니다.`);
+    
+    // 업로드 완료 후 초기화
+    handleReset();
   } catch (error) {
     console.error("업로드 오류:", error);
     alert(`업로드 중 오류가 발생했습니다. ${(error as Error).message}`);
@@ -482,21 +487,9 @@ const handleDelete = async (id: number) => {
   }
 };
 
-/* 컴포넌트 마운트 시 검색 실행 */
-onMounted(() => {
-  handleSearch();
-});
-
 const handleError = (error: string) => {
   alert(error);
 };
-
-/**
- * 컴포넌트 언마운트 시 정리
- */
-onUnmounted(() => {
-  clearPreviews();
-});
 
 /* Toggle Handlers */
 /**
@@ -512,6 +505,22 @@ const toggleFailedSms = () => {
 const toggleAllList = () => {
   isAllListExpanded.value = !isAllListExpanded.value;
 };
+
+/* Life Cycle Hooks */
+/* 컴포넌트 마운트 시 검색 실행 */
+onMounted(() => {
+  handleSearch();
+  fetchSmsFormPlaceholders().then(response => {
+    smsFormPlaceholders.value = response.data.items;
+  });
+});
+
+/**
+ * 컴포넌트 언마운트 시 정리
+ */
+onUnmounted(() => {
+  clearPreviews();
+});
 </script>
 
 <template>
@@ -712,12 +721,23 @@ const toggleAllList = () => {
     <div v-if="showSmsFormModal" class="modal-overlay">
       <div class="modal-content">
         <h3>SMS 발송 내용 확인</h3>
-        <div class="sms-form-editor">
-          <textarea 
-            v-model="editableSmsForm"
-            rows="5"
-            placeholder="SMS 발송 내용을 입력하세요"
-          ></textarea>
+        <div class="sms-form-container">
+          <div class="placeholders-list">
+            <h4>치환 가능한 값</h4>
+            <ul>
+              <li v-for="placeholder in smsFormPlaceholders" :key="placeholder.key">
+                <span class="placeholder-key">{{ placeholder.description }}</span>
+                <span class="placeholder-value">{{ placeholder.value }}</span>
+              </li>
+            </ul>
+          </div>
+          <div class="sms-form-editor">
+            <textarea 
+              v-model="editableSmsForm"
+              rows="5"
+              placeholder="SMS 발송 내용을 입력하세요"
+            ></textarea>
+          </div>
         </div>
         <div class="modal-actions">
           <button 
@@ -1063,15 +1083,64 @@ button:disabled {
   padding: 2rem;
   border-radius: 8px;
   width: 90%;
-  max-width: 500px;
+  max-width: 800px;
   min-height: 60vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.sms-form-editor {
+.sms-form-container {
+  display: flex;
+  gap: 1rem;
   margin: 1rem 0;
+  flex: 1;
+}
+
+.placeholders-list {
+  width: 200px;
+  padding: 1rem;
+  background-color: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  height: fit-content;
+}
+
+.placeholders-list h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.placeholders-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.placeholders-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 13px;
+}
+
+.placeholders-list li:last-child {
+  border-bottom: none;
+}
+
+.placeholder-key {
+  color: var(--button-bg);
+  font-weight: bold;
+}
+
+.placeholder-value {
+  color: var(--text-secondary);
+}
+
+.sms-form-editor {
   flex: 1;
   display: flex;
   flex-direction: column;
