@@ -18,6 +18,10 @@ import type { ISmsFormPlaceholder } from "../../types/constant";
 /* APIs */
 import { validateGradeImage, uploadGradeImage, fetchGrades, deleteGrade, getSmsForm } from "../../api/grade";
 import { fetchSmsFormPlaceholders } from "../../api/constant";
+
+/* Utils */
+import { validateSmsFormPlaceholders } from "../../utils/smsForm";
+
 /* CONSTANTS */
 /**
  * 파일명 형식 정규식
@@ -312,6 +316,9 @@ const handleConfirmUpload = async () => {
   try {
     showSmsFormModal.value = false;
     isLoading.value = true;
+    
+    // SMS 양식 유효성 검사
+    validateSmsFormPlaceholders(editableSmsForm.value, smsFormPlaceholders.value);
     
     // 모든 이미지의 SMS 폼 업데이트
     parsedSuccessImages.value.forEach(image => {
