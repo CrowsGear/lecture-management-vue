@@ -11,6 +11,9 @@ import type { ISmsFormPlaceholder } from "../../types/constant";
 import { fetchLectureById, updateLecture } from "../../api/lecture";
 import { fetchSmsFormPlaceholders } from "../../api/constant";
 
+/* Utils */
+import { validateSmsFormPlaceholders } from "../../utils/smsForm";
+
 /* REFS */
 const route = useRoute();
 const lecture = ref<ILecture | null>(null);
@@ -28,6 +31,9 @@ const handleEditSmsForm = () => {
 const handleSaveSmsForm = async () => {
   try {
     if (!lecture.value?.id) return;
+    
+    // 유효성 검사 실행
+    validateSmsFormPlaceholders(editedSmsForm.value, smsFormPlaceholders.value);
     
     const response = await updateLecture(lecture.value.id, {
       smsForm: editedSmsForm.value
