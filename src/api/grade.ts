@@ -1,4 +1,4 @@
-import axios from "../utils/axios";
+import axiosInstance from "../utils/axios";
 import type { IGradeUploadParams } from "../types/grade";
 import type { IResponse } from "../types/common/response";
 import type { IGradeSearchParams } from "../types/grade";
@@ -9,7 +9,7 @@ import type { IGradeSearchParams } from "../types/grade";
  * @description 학생, 강의, 학생-강의 매핑 유효성 검증
  */
 export const validateGradeImage = async (params: Partial<IGradeUploadParams>): Promise<IResponse> => {
-  const response = await axios.post("/grades/check", params);
+  const response = await axiosInstance.post("/grades/check", params);
   return response.data;
 };
 
@@ -18,7 +18,7 @@ export const validateGradeImage = async (params: Partial<IGradeUploadParams>): P
  * @description 이미지명을 통한 SMS 폼 조회
  */
 export const getSmsForm = async (params: Partial<IGradeUploadParams>): Promise<IResponse> => {
-  const response = await axios.post("/grades/sms-form-check", params);
+  const response = await axiosInstance.post("/grades/sms-form-check", params);
   return response.data;
 };
 
@@ -63,7 +63,7 @@ export const uploadGradeImage = async (
  * @memberof uploadGradeImage
  */
 const getPreSignedUrl = async (params: IGradeUploadParams): Promise<IResponse> => {
-  const response = await axios.post("/grades/pre-signed-url", params);
+  const response = await axiosInstance.post("/grades/pre-signed-url", params);
   return response.data;
 };
 
@@ -90,7 +90,7 @@ const uploadToS3 = async (file: File, response: IResponse): Promise<string> => {
  * @memberof uploadGradeImage
  */
 const createGrade = async (params: IGradeUploadParams): Promise<IResponse> => {
-  const response = await axios.post("/grades", params);
+  const response = await axiosInstance.post("/grades", params);
   return response.data;
 };
 
@@ -99,7 +99,7 @@ const createGrade = async (params: IGradeUploadParams): Promise<IResponse> => {
  * 성적 목록 조회
  */
 export const fetchGrades = async (params?: IGradeSearchParams): Promise<IResponse> => {
-  const response = await axios.get("/grades", { params });
+  const response = await axiosInstance.get("/grades", { params });
   return response.data;
 };
 
@@ -107,6 +107,6 @@ export const fetchGrades = async (params?: IGradeSearchParams): Promise<IRespons
  * 성적 삭제
  */
 export const deleteGrade = async (id: number): Promise<IResponse> => {
-  const response = await axios.delete(`/grades/${id}`);
+  const response = await axiosInstance.delete(`/grades/${id}`);
   return response.data;
 };

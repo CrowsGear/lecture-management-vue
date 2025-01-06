@@ -1,10 +1,10 @@
-import axios from "../utils/axios";
+import axiosInstance from "../utils/axios";
 import type { IExcelUploadData, IStudentSearchParams } from "../types/student";
 import type { IResponse } from "../types/common/response";
 
 export const fetchStudents = async (searchParams?: IStudentSearchParams): Promise<IResponse> => {
   try {
-    const response = await axios.get("/students", { params: searchParams });
+    const response = await axiosInstance.get("/students", { params: searchParams });
     return response.data;
   } catch (error) {
     console.error("Failed to fetch students:", error);
@@ -14,7 +14,7 @@ export const fetchStudents = async (searchParams?: IStudentSearchParams): Promis
 
 export const createStudent = async (studentData: any): Promise<IResponse> => {
   try {
-    const response = await axios.post("/students", studentData);
+    const response = await axiosInstance.post("/students", studentData);
     return response.data;
   } catch (error) {
     console.error("Failed to create student:", error);
@@ -24,7 +24,7 @@ export const createStudent = async (studentData: any): Promise<IResponse> => {
 
 export const updateStudent = async (id: string, studentData: any): Promise<IResponse> => {
   try {
-    const response = await axios.patch(`/students/${id}`, studentData);
+    const response = await axiosInstance.patch(`/students/${id}`, studentData);
     return response.data;
   } catch (error) {
     console.error("Failed to update student:", error);
@@ -34,7 +34,7 @@ export const updateStudent = async (id: string, studentData: any): Promise<IResp
 
 export const deleteStudent = async (id: string): Promise<IResponse> => {
   try {
-    const response = await axios.delete(`/students/${id}`);
+    const response = await axiosInstance.delete(`/students/${id}`);
     return response.data;
   } catch (error) {
     console.error("Failed to delete student:", error);
@@ -44,7 +44,7 @@ export const deleteStudent = async (id: string): Promise<IResponse> => {
 
 export const uploadStudents = async (studentData: IExcelUploadData): Promise<IResponse> => {
   try {
-    const response = await axios.post("/common/uploads", studentData);
+    const response = await axiosInstance.post("/common/uploads", studentData);
     return response.data;
   } catch (error) {
     console.error("Failed to upload students:", error);
