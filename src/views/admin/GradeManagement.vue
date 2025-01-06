@@ -359,7 +359,7 @@ const handleReset = () => {
   currentLectureCode.value = "";
 };
 
-/* 정리 함수 */
+/* 초기화 함수 */
 /**
  * 미리보기 URL 정리
  * @memberof handleReset
