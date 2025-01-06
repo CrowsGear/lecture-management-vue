@@ -1,4 +1,4 @@
-import axios from "../utils/axios";
+import axiosInstance from "../utils/axios";
 import type { ILecture } from "../types/lecture";
 import type { ITeacherSearchParams } from "../types/teacher";
 import type { IResponse } from "../types/common/response";
@@ -6,7 +6,7 @@ import type { IResponse } from "../types/common/response";
 
 export const fetchLectures = async (searchParams?: ITeacherSearchParams): Promise<IResponse> => {
   try {
-    const response = await axios.get("/lectures", { params: searchParams });
+    const response = await axiosInstance.get("/lectures", { params: searchParams });
     return response.data;
   } catch (error) {
     console.error("Failed to fetch lectures:", error);
@@ -16,7 +16,7 @@ export const fetchLectures = async (searchParams?: ITeacherSearchParams): Promis
 
 export const fetchLectureById = async (id: number): Promise<IResponse> => {
   try {
-    const response = await axios.get(`/lectures/${id}`);
+    const response = await axiosInstance.get(`/lectures/${id}`);
     return response.data;
   } catch (error) {
     console.error("Failed to fetch lecture by id:", error);
@@ -26,7 +26,7 @@ export const fetchLectureById = async (id: number): Promise<IResponse> => {
 
 export const createLecture = async (lectureData: Partial<ILecture>): Promise<IResponse> => {
   try {
-    const response = await axios.post("/lectures", lectureData);
+    const response = await axiosInstance.post("/lectures", lectureData);
     return response.data;
   } catch (error) {
     console.error("Failed to create lecture:", error);
@@ -36,7 +36,7 @@ export const createLecture = async (lectureData: Partial<ILecture>): Promise<IRe
 
 export const updateLecture = async (id: number, lectureData: Partial<ILecture>): Promise<IResponse> => {
   try {
-    const response = await axios.patch(`/lectures/${id}`, lectureData);
+    const response = await axiosInstance.patch(`/lectures/${id}`, lectureData);
     return response.data;
   } catch (error) {
     console.error("Failed to update lecture:", error);

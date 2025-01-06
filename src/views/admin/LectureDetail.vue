@@ -5,29 +5,19 @@ import { useRoute } from "vue-router";
 
 /* Types */
 import type { ILecture } from "../../types/lecture";
+import type { ISmsFormPlaceholder } from "../../types/constant";
 
 /* API */
 import { fetchLectureById, updateLecture } from "../../api/lecture";
+import { fetchSmsFormPlaceholders } from "../../api/constant";
 
 /* REFS */
 const route = useRoute();
 const lecture = ref<ILecture | null>(null);
 const loading = ref(true);
 const isEditingSmsForm = ref(false);
+const smsFormPlaceholders = ref<ISmsFormPlaceholder[]>([]);
 const editedSmsForm = ref("");
-
-onMounted(async () => {
-  try {
-    const id = parseInt(route.params.id as string);
-    const response = await fetchLectureById(id);
-    lecture.value = response.data;
-  } catch (error) {
-    console.error("강의 정보를 불러오는데 실패했습니다:", error);
-    alert("강의 정보를 불러오는데 실패했습니다.");
-  } finally {
-    loading.value = false;
-  }
-});
 
 /* Event Handlers */
 const handleEditSmsForm = () => {
@@ -62,6 +52,35 @@ const handleCancelEdit = () => {
   isEditingSmsForm.value = false;
   editedSmsForm.value = "";
 };
+
+/* Lifecycle Hooks */
+onMounted(async () => {
+  try {
+    /* 강의 정보 조회 */
+    const id = parseInt(route.params.id as string);
+    const lectureResponse = await fetchLectureById(id);
+
+    if (lectureResponse.code === "LC-01") {
+      lecture.value = lectureResponse.data;
+    } else {
+      throw new Error(`${lectureResponse.code}: ${lectureResponse.message}`);
+    }
+
+    /* SMS 양식 조회 */
+    const smsFormPlaceholdersResponse = await fetchSmsFormPlaceholders();
+    if (smsFormPlaceholdersResponse.code === "CT-01") {
+      smsFormPlaceholders.value = smsFormPlaceholdersResponse.data.items;
+      console.log(smsFormPlaceholders.value);
+    } else {
+      throw new Error(`${smsFormPlaceholdersResponse.code}: ${smsFormPlaceholdersResponse.message}`);
+    }
+  } catch (error) {
+    console.error("강의 정보 및 SMS 양식 정보를 불러오는데 실패했습니다:", error);
+    alert(`강의 정보 및 SMS 양식 정보를 불러오는데 실패했습니다.\n${(error as Error).message}`);
+  } finally {
+    loading.value = false;
+  }
+});
 </script>
 
 <template>
@@ -100,14 +119,28 @@ const handleCancelEdit = () => {
             <td class="sms-form-cell">
               <template v-if="isEditingSmsForm">
                 <div class="sms-form-preview">
-                  <textarea
-                    v-model="editedSmsForm"
-                    class="sms-form-editor"
-                    rows="5"
-                    placeholder="SMS 양식을 입력하세요"
-                  ></textarea>
-                  <div class="character-count">
-                    {{ editedSmsForm.length }}/1000자
+                  <div class="sms-form-container">
+                    <div class="placeholders-list">
+                      <h4>치환 가능한 값</h4>
+                      <ul>
+                        <li v-for="placeholder in smsFormPlaceholders" :key="placeholder.key">
+                          <span class="placeholder-key">{{ placeholder.description }}</span>
+                          <span class="placeholder-value">{{ placeholder.value }}</span>
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="sms-preview-box">
+                      <div class="sms-preview-header">
+                        <span>SMS 미리보기</span>
+                      </div>
+                      <textarea
+                        v-model="editedSmsForm"
+                        class="sms-form-editor"
+                        rows="5"
+                        placeholder="SMS 양식을 입력하세요"
+                      ></textarea>
+                      <span class="character-count">{{ editedSmsForm.length }}/1000자</span>
+                    </div>
                   </div>
                 </div>
                 <div class="edit-actions">
@@ -120,9 +153,9 @@ const handleCancelEdit = () => {
                   <div class="sms-preview-box">
                     <div class="sms-preview-header">
                       <span>SMS 미리보기</span>
-                      <span class="character-count">{{ (lecture.smsForm || '').length }}/1000자</span>
                     </div>
                     <pre>{{ lecture.smsForm || '-' }}</pre>
+                    <span class="character-count">{{ (lecture.smsForm || '').length }}/1000자</span>
                   </div>
                   <button class="edit-btn" @click="handleEditSmsForm">수정</button>
                 </div>
@@ -213,6 +246,8 @@ const handleCancelEdit = () => {
 .character-count {
   color: var(--text-secondary);
   font-size: 13px;
+  text-align: right;
+  padding-top: 8px;
 }
 
 .sms-form-preview {
@@ -221,8 +256,6 @@ const handleCancelEdit = () => {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 1rem;
-  max-width: 400px;
-  aspect-ratio: 9/16;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -233,6 +266,7 @@ const handleCancelEdit = () => {
   flex-direction: column;
   gap: 1rem;
   min-height: inherit;
+  position: relative;
 }
 
 .sms-form-content pre {
@@ -251,6 +285,22 @@ const handleCancelEdit = () => {
 .sms-form-content .edit-btn {
   align-self: flex-end;
   margin-top: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.editor-container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .sms-form-editor {
@@ -258,14 +308,21 @@ const handleCancelEdit = () => {
   padding: 8px;
   border: none;
   border-radius: 4px;
-  resize: vertical;
+  resize: none;
   min-height: calc(1.2em * 1.4 * 8);
   font-family: inherit;
   line-height: 1.4;
   height: auto;
   font-size: 15px;
-  background-color: transparent;
+  background-color: #ffffff;
   flex: 1;
+}
+
+.character-count {
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-align: right;
+  padding-top: 8px;
 }
 
 .edit-actions {
@@ -298,5 +355,52 @@ button {
   background-color: transparent;
   border: 1px solid var(--border-color);
   color: var(--text-color);
+}
+
+.sms-form-container {
+  display: flex;
+  gap: 1rem;
+}
+
+.placeholders-list {
+  width: 200px;
+  padding: 1rem;
+  background-color: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.placeholders-list h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.placeholders-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.placeholders-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 13px;
+}
+
+.placeholders-list li:last-child {
+  border-bottom: none;
+}
+
+.placeholder-key {
+  color: var(--button-bg);
+  font-weight: bold;
+}
+
+.placeholder-value {
+  color: var(--text-secondary);
 }
 </style> 
