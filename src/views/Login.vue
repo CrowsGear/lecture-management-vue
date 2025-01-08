@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="ts" name="UserLogin">
 /* Third Party */
 import { ref } from "vue";
 
@@ -12,16 +12,18 @@ import type { ILoginForm } from "../types/login";
 const PHONE_REGEX = /^\d{8}$/;
 const PASSWORD_REGEX = /^\d{5}$/;
 
+/* Stores */
 const authStore = useAuthStore();
 
+/* REFs */
 const form = ref<ILoginForm>({
   phone: "",
   password: ""
 });
-
+const phoneMiddle = ref("");
+const phoneLast = ref("");
 const bannerTop = ref<string>(import.meta.env.VITE_BANNER_TOP_URL);
 const bannerBottom = ref<string>(import.meta.env.VITE_BANNER_BOTTOM_URL);
-
 const errors = ref({
   phone: "",
   password: ""
@@ -74,6 +76,34 @@ const validatePassword = (value: string) => {
 };
 
 /**
+ * 전화번호 입력 핸들러 - 중간 자리
+ */
+const handleMiddleInput = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const value = input.value.replace(/\D/g, "").slice(0, 4);
+  phoneMiddle.value = value;
+  form.value.phone = phoneMiddle.value + phoneLast.value;
+  validatePhone(form.value.phone);
+  
+  // 4자리 입력 완료시 다음 입력란으로 포커스 이동
+  if (value.length === 4) {
+    const nextInput = document.getElementById("phone-last");
+    nextInput?.focus();
+  }
+};
+
+/**
+ * 전화번호 입력 핸들러 - 끝자리
+ */
+const handleLastInput = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const value = input.value.replace(/\D/g, "").slice(0, 4);
+  phoneLast.value = value;
+  form.value.phone = phoneMiddle.value + phoneLast.value;
+  validatePhone(form.value.phone);
+};
+
+/**
  * 로그인 핸들러
  */
 const handleLogin = async (): Promise<void> => {
@@ -115,15 +145,30 @@ const handleLogin = async (): Promise<void> => {
           <!-- ID 입력 -->
           <div class="input-row">
             <div class="input-container">
-              <label for="userId">ID</label>
-              <input
+              <label for="phone-middle">ID</label>
+              <div class="phone-input-group">
+                <span class="phone-prefix">010</span>
+                <span class="phone-separator">-</span>
+                <input
                   type="text"
-                  id="userId"
-                  v-model="form.phone"
-                  @input="validatePhone(form.phone)"
+                  id="phone-middle"
+                  v-model="phoneMiddle"
+                  @input="handleMiddleInput"
                   @keypress="handleKeyPress"
-                  maxlength="8"
-              />
+                  maxlength="4"
+                  placeholder="XXXX"
+                />
+                <span class="phone-separator">-</span>
+                <input
+                  type="text"
+                  id="phone-last"
+                  v-model="phoneLast"
+                  @input="handleLastInput"
+                  @keypress="handleKeyPress"
+                  maxlength="4"
+                  placeholder="XXXX"
+                />
+              </div>
             </div>
             <div class="error-message" v-if="errors.phone">
               {{ errors.phone }}
@@ -164,7 +209,7 @@ const handleLogin = async (): Promise<void> => {
       <div class="login-help">
         <div class="help-section">
           <h3>(1) 아이디는?</h3>
-          <p>ID는 현재 수강중인 학생(또는 학부모)의 휴대폰 번호 뒤 8자리 입니다. 예를 들어 본인 휴대폰 번호가 010-1234-1234라면 ID는 12341234입니다.</p>
+          <p>ID는 현재 수강중인 학생(또는 학부모)의 휴대폰 번호 뒤 8자리 입니다. 예를 들어 본인 휴대폰 번호가 010-1234-5678라면 ID는 12345678입니다.</p>
         </div>
 
         <div class="help-section">
@@ -233,7 +278,7 @@ const handleLogin = async (): Promise<void> => {
 .input-row {
   position: relative;
   display: flex;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .input-container {
@@ -271,6 +316,7 @@ input {
   font-weight: normal;
   border-radius: 0.625rem;
   margin-top: -0.125rem;
+  align-self: flex-start;
 }
 
 .enter-btn:disabled {
@@ -304,11 +350,42 @@ input {
 
 .error-message {
   position: absolute;
-  bottom: -0.9375rem;
+  bottom: -1.25rem;
   left: 3.4375rem;
-  color: var(--error-color);
-  font-size: 0.625rem;
-  line-height: 1;
+  color: #1e3a8a;
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.phone-input-group {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.phone-prefix {
+  font-size: 1rem;
+  color: var(--text-color);
+  padding: 0 0.25rem;
+}
+
+.phone-separator {
+  font-size: 1rem;
+  color: var(--text-color);
+  padding: 0 0.25rem;
+}
+
+.phone-input-group input {
+  width: 4rem;
+  height: 2.5rem;
+  border: 1px solid var(--border-color);
+  padding: 0 0.625rem;
+  font-size: 1rem;
+  outline: none;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  text-align: center;
 }
 
 /* 모바일 환경 최적화 */
@@ -348,6 +425,25 @@ input {
   .help-section h3,
   .help-section p {
     font-size: 0.9rem;
+  }
+
+  .phone-input-group input {
+    width: 3.5rem;
+    height: 2.2rem;
+    font-size: 0.9rem;
+  }
+  
+  .phone-prefix,
+  .phone-separator {
+    font-size: 0.9rem;
+  }
+
+  .input-row {
+    margin-bottom: 1.25rem;
+  }
+
+  .error-message {
+    font-size: 0.7rem;
   }
 }
 
