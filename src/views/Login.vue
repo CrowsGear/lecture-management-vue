@@ -156,7 +156,7 @@ const handleLogin = async (): Promise<void> => {
                   @input="handleMiddleInput"
                   @keypress="handleKeyPress"
                   maxlength="4"
-                  placeholder="XXXX"
+                  placeholder="****"
                 />
                 <span class="phone-separator">-</span>
                 <input
@@ -166,7 +166,7 @@ const handleLogin = async (): Promise<void> => {
                   @input="handleLastInput"
                   @keypress="handleKeyPress"
                   maxlength="4"
-                  placeholder="XXXX"
+                  placeholder="****"
                 />
               </div>
             </div>
