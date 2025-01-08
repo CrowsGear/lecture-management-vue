@@ -2,13 +2,13 @@
 /* Third Party */
 import { ref } from "vue";
 
-/* stores */
+/* Stores */
 import { useAuthStore } from "../stores/auth";
 
-/* types */
+/* Types */
 import type { ILoginForm } from "../types/login";
 
-/* constants */
+/* Constants */
 const PHONE_REGEX = /^\d{8}$/;
 const PASSWORD_REGEX = /^\d{5}$/;
 
