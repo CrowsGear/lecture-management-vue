@@ -1,6 +1,7 @@
-<script setup lang="ts" name="UserLogin">
+<script setup lang="ts">
 /* Third Party */
-import { ref } from "vue";
+import { ref, onMounted } from"vue";
+import { useRoute } from "vue-router";
 
 /* Stores */
 import { useAuthStore } from "../stores/auth";
@@ -14,6 +15,7 @@ const PASSWORD_REGEX = /^\d{5}$/;
 
 /* Stores */
 const authStore = useAuthStore();
+const route = useRoute();
 
 /* REFs */
 const form = ref<ILoginForm>({
@@ -30,26 +32,44 @@ const errors = ref({
 });
 
 /**
- * Enter 키 입력 핸들러
- * @param event - 키보드 이벤트
+ * 쿼리 파라미터에서 전화번호 추출 및 유효성 검사
  */
-const handleKeyPress = (event: KeyboardEvent) => {
-  if (event.key === "Enter") {
-    handleLogin();
+const setPhoneByQuery = () => {
+  const phoneFromQuery = route.query.id as string | null;
+
+  if (validatePhone(phoneFromQuery)) {
+
+    // 010을 제외한 나머지 8자리 추출
+    const phoneNumber = (phoneFromQuery as string).slice(-8);
+    console.log(phoneNumber);
+
+    // 중간 4자리와 끝 4자리로 분리
+    phoneMiddle.value = phoneNumber.slice(0, 4);
+    phoneLast.value = phoneNumber.slice(4);
+
+    // form의 phone 값도 업데이트
+    form.value.phone = phoneNumber;
+
+    // 스토어에 전화번호 저장
+    authStore.setPhone(phoneFromQuery as string);
   }
 };
+
 
 /**
  * 전화번호 유효성 검사
  * @param value - 전화번호
  * @returns - 유효성 검사 결과
  */
-const validatePhone = (value: string) => {
+const validatePhone = (value: string | null) => {
   if (!value) {
     errors.value.phone = "";
     return false;
   }
-  if (!PHONE_REGEX.test(value)) {
+
+  const phoneNumber8 = value.slice(-8);
+
+  if (!PHONE_REGEX.test(phoneNumber8)) {
     errors.value.phone = "휴대폰 번호 뒤 8자리를 입력해주세요.";
     return false;
   }
@@ -73,6 +93,16 @@ const validatePassword = (value: string) => {
   }
   errors.value.password = "";
   return true;
+};
+
+/**
+ * Enter 키 입력 핸들러
+ * @param event - 키보드 이벤트
+ */
+ const handleKeyPress = (event: KeyboardEvent) => {
+  if (event.key === "Enter") {
+    handleLogin();
+  }
 };
 
 /**
@@ -127,6 +157,11 @@ const handleLogin = async (): Promise<void> => {
   }
 };
 
+
+/* Lifecycle Hooks */
+onMounted(() => {
+  setPhoneByQuery();
+});
 </script>
 
 <template>
