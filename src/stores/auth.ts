@@ -11,6 +11,7 @@ const AUTH_TYPES = [0,1,2];
 
 export const useAuthStore = defineStore("auth", () => {
   const router = useRouter();
+  const phone = ref<string | null>(null);
   const token = ref<string | null>(localStorage.getItem(TOKEN_NAME));
   const authType = ref<string | null>(localStorage.getItem(AUTH_TYPE_NAME));
   const isAuthenticated = ref<boolean>(!!token.value);
@@ -22,9 +23,20 @@ export const useAuthStore = defineStore("auth", () => {
     localStorage.setItem(TOKEN_NAME, newToken);
   };
 
+  /* 인증 타입 설정 */
   const setAuthType = (newAuthType: number) => {
     authType.value = newAuthType.toString();
     localStorage.setItem(AUTH_TYPE_NAME, newAuthType.toString());
+  };
+
+  /* 전화번호 설정 */
+  const setPhone = (_phone: string) => {
+    phone.value = _phone;
+  };
+
+  /* 전화번호 삭제 */
+  const deletePhone = () => {
+    phone.value = null;
   };
 
   /* 로그인 */
@@ -84,10 +96,13 @@ export const useAuthStore = defineStore("auth", () => {
 
   return {
     token,
+    phone,
     authType,
     isAuthenticated,
     login,
     logout,
-    setToken
+    setToken,
+    setPhone,
+    deletePhone
   };
 }); 
