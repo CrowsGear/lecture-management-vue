@@ -3,7 +3,10 @@ import { onMounted } from "vue";
 import { useAuthStore } from "../stores/auth";
 import { useRouter } from "vue-router";
 
+/* Stores */
 const authStore = useAuthStore();
+
+/* Router */
 const router = useRouter();
 
 /* Methods */
