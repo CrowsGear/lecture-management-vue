@@ -3,8 +3,18 @@ import { onMounted } from "vue";
 import { useAuthStore } from "../stores/auth";
 import { useRouter } from "vue-router";
 
+/* Stores */
 const authStore = useAuthStore();
+
+/* Router */
 const router = useRouter();
+
+/* Methods */
+const handleLogout = () => {
+  authStore.logout();
+  router.push("/");
+};
+
 onMounted(() => {
   if (!authStore.isAuthenticated) {
     alert("로그인 후 이용해주세요.");
@@ -25,13 +35,13 @@ onMounted(() => {
 
 <template>
   <div class="admin-layout">
-
     <!-- Admin Sidebar -->
     <nav class="admin-sidebar">
       <div class="logo-container">
         <img src="../assets/vue.svg" alt="logo" class="logo"/>
       </div>
-      <ul class = "menu-list">
+
+      <ul class="menu-list">
         <li>
           <RouterLink to="/admin/schools" class="menu-item" active-class="active">
             학교 관리
@@ -61,9 +71,23 @@ onMounted(() => {
     </nav>
 
     <!-- Admin Content -->
-    <main class="admin-content">
-      <router-view></router-view>
-    </main>
+    <div class="admin-content-wrapper">
+      <!-- Top Bar -->
+      <div class="admin-top-bar">
+        <div class="top-bar-left">
+          관리자 페이지
+        </div>
+        <div class="top-bar-right">
+          <button class="logout-button" @click="handleLogout">
+            로그아웃
+          </button>
+        </div>
+      </div>
+
+      <main class="admin-content">
+        <router-view></router-view>
+      </main>
+    </div>
   </div>
 </template>
 
@@ -75,12 +99,61 @@ onMounted(() => {
   background-color: var(--content-bg);
 }
 
+.admin-content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 900px;
+  margin-left: 240px; /* 사이드바 너비만큼 여백 */
+}
+
+.admin-top-bar {
+  height: 60px;
+  background-color: white;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 240px; /* 사이드바 너비만큼 여백 */
+  z-index: 100;
+}
+
+.top-bar-left {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--text-color);
+}
+
+.logout-button {
+  padding: 8px 16px;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.logout-button:hover {
+  background-color: #dc2626;
+}
+
 .admin-sidebar {
   width: 240px;
   background-color: var(--sidebar-bg);
   color: var(--sidebar-text);
   padding: 20px 0;
-  flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+  overflow-y: auto;
 }
 
 .logo-container {
@@ -118,7 +191,7 @@ onMounted(() => {
 
 .admin-content {
   flex: 1;
-  padding: 20px;
+  padding: 80px 20px 20px; /* 상단바 높이 + 기존 패딩 */
   background-color: var(--content-bg);
   color: var(--text-color);
   width: calc(100% - 240px);
